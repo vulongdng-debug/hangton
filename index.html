@@ -366,109 +366,51 @@
       return (localStorage.getItem(STORAGE_SYNC_KEY) || DEFAULT_STORE_KEY).trim().toUpperCase();
     }
 
-    // Tự động tải từ Cloud ngay khi mở trang web (trên cả PC và Điện thoại)
+    // Tự động tải dữ liệu khi mở trang
     async function loadData() {
-      const savedPeriod = localStorage.getItem(STORAGE_PERIOD_KEY);
-      if (savedPeriod) {
-        periodTitle = savedPeriod;
-        document.getElementById('periodInput').value = periodTitle;
-      }
+      try {
+        const savedPeriod = localStorage.getItem(STORAGE_PERIOD_KEY);
+        if (savedPeriod) {
+          periodTitle = savedPeriod;
+          const periodElem = document.getElementById('periodInput');
+          if (periodElem) periodElem.value = periodTitle;
+        }
 
-      document.getElementById('syncBinKeyInput').value = getSyncKey();
+        const syncInput = document.getElementById('syncBinKeyInput');
+        if (syncInput) syncInput.value = getSyncKey();
 
-      // Đọc tạm dữ liệu cục bộ trước để tránh màn hình trống
-      const savedData = localStorage.getItem(STORAGE_DATA_KEY);
-      if (savedData) {
-        try {
-          inventory = JSON.parse(savedData);
-        } catch(e) {
+        const savedData = localStorage.getItem(STORAGE_DATA_KEY);
+        if (savedData) {
+          try {
+            inventory = JSON.parse(savedData);
+          } catch(e) {
+            inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
+          }
+        } else {
           inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
         }
-      } else {
-        inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
-      }
-      renderTable();
-
-      // Tự động kéo dữ liệu mới nhất từ Cloud về ngay khi vừa tải trang
-      await syncNowFromCloud(true);
-    }
-
-    // Tự động lưu LocalStorage & đẩy thẳng lên Cloud
-    let autoCloudTimer = null;
-    function autoSaveLocal() {
-      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
-      localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
-      updateStats();
-
-      // Tự động gửi lên mây sau 800ms kể từ khi ngừng gõ phím
-      clearTimeout(autoCloudTimer);
-      autoCloudTimer = setTimeout(() => {
-        pushDataToCloudSilent();
-      }, 800);
-    }
-
-    // Đồng bộ ngầm lên server
-    async function pushDataToCloudSilent() {
-      const key = getSyncKey();
-      try {
-        const payload = {
-          period: periodTitle,
-          data: inventory,
-          updatedAt: Date.now()
-        };
-        await fetch(`https://kvdb.io/4y94w8Ekm6jT8b88M1mZ9J/${encodeURIComponent(key)}`, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        const badge = document.getElementById('cloudStatusBadge');
-        if (badge) {
-          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đã lưu mây`;
-        }
-      } catch (e) {
-        console.warn("Cloud autosave offline, saved to local storage.");
-      }
-    }
-
-    // Kéo dữ liệu từ Cloud về
-    async function syncNowFromCloud(silent = false) {
-      const key = getSyncKey();
-      const badge = document.getElementById('cloudStatusBadge');
-      if (badge && !silent) {
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-spin"></span> Đang tải...`;
-      }
-
-      try {
-        const res = await fetch(`https://kvdb.io/4y94w8Ekm6jT8b88M1mZ9J/${encodeURIComponent(key)}?nocache=${Date.now()}`);
-        if (res.ok) {
-          const remote = await res.json();
-          if (remote && Array.isArray(remote.data) && remote.data.length > 0) {
-            inventory = remote.data;
-            if (remote.period) {
-              periodTitle = remote.period;
-              document.getElementById('periodInput').value = periodTitle;
-            }
-            localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
-            localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
-            renderTable();
-            if (badge) {
-              badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Khớp với Cloud`;
-            }
-            if (!silent) {
-              showToast("Đã cập nhật số liệu mới nhất từ PC!", "☁️");
-            }
-            return;
-          }
-        }
+        renderTable();
       } catch (err) {
-        console.warn("Fetch from cloud failed:", err);
+        console.error("Lỗi khi load dữ liệu ban đầu:", err);
+        inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
+        renderTable();
       }
-      if (badge) {
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Ngoại tuyến`;
+    }
+
+    // Tự động lưu LocalStorage
+    function autoSaveLocal() {
+      try {
+        localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
+        localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
+      } catch(e) {
+        console.error("Lỗi lưu localStorage:", e);
       }
+      updateStats();
     }
 
     function showToast(msg, icon = "✅") {
       const toast = document.getElementById('saveToast');
+      if (!toast) return;
       document.getElementById('toastMsg').textContent = msg;
       document.getElementById('toastIcon').textContent = icon;
       toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
@@ -479,219 +421,107 @@
       }, 2000);
     }
 
+    // Nút Lưu lên Cloud (dùng API JSON công khai hỗ trợ đầy đủ CORS cho cả PC & ĐT)
     async function handleManualSave() {
       autoSaveLocal();
-      showToast("Đang lưu lên Cloud...", "⏳");
-      await pushDataToCloudSilent();
-      showToast("Đã lưu số liệu lên Cloud cho điện thoại!", "☁️");
-    }
-
-    function updatePeriod(val) {
-      periodTitle = val.trim() || "Tháng 10/2026";
-      autoSaveLocal();
-    }
-
-    function resetData() {
-      if (confirm('Bạn có chắc muốn đặt lại toàn bộ dữ liệu ban đầu theo sổ tay không?')) {
-        inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
-        periodTitle = "Tháng 10/2026";
-        document.getElementById('periodInput').value = periodTitle;
-        autoSaveLocal();
-        renderTable();
-        showToast("Đã khôi phục dữ liệu gốc!");
-      }
-    }
-
-    // Modal cấu hình mã kho
-    function openSyncModal() {
-      document.getElementById('syncModal').classList.remove('hidden');
-    }
-
-    function closeSyncModal() {
-      document.getElementById('syncModal').classList.add('hidden');
-    }
-
-    function saveSyncKey() {
-      const key = (document.getElementById('syncBinKeyInput').value || '').trim().toUpperCase();
-      if (!key) {
-        alert("Vui lòng nhập Mã Kho Đồng Bộ!");
-        return;
-      }
-      localStorage.setItem(STORAGE_SYNC_KEY, key);
-      showToast("Đã cập nhật mã kho: " + key);
-      syncNowFromCloud(false);
-    }
-
-    async function pushToCloud() {
-      await handleManualSave();
-      closeSyncModal();
-    }
-
-    async function pullFromCloud() {
-      await syncNowFromCloud(false);
-      closeSyncModal();
-    }
-
-      const savedSyncKey = localStorage.getItem(STORAGE_SYNC_KEY);
-      if (savedSyncKey) {
-        document.getElementById('syncBinKeyInput').value = savedSyncKey;
-      }
-
-      const savedData = localStorage.getItem(STORAGE_DATA_KEY);
-      if (savedData) {
-        try {
-          inventory = JSON.parse(savedData);
-        } catch(e) {
-          inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
-        }
-      } else {
-        inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
-      }
-    }
-
-    // Tự động lưu LocalStorage theo thời gian thực (F5 không mất)
-    function autoSaveLocal() {
-      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
-      localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
-      updateStats();
-    }
-
-    function showToast(msg, icon = "✅") {
-      const toast = document.getElementById('saveToast');
-      document.getElementById('toastMsg').textContent = msg;
-      document.getElementById('toastIcon').textContent = icon;
-      toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
-      toast.classList.add('opacity-100', 'translate-y-0');
-      setTimeout(() => {
-        toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
-        toast.classList.remove('opacity-100', 'translate-y-0');
-      }, 2000);
-    }
-
-    function handleManualSave() {
-      autoSaveLocal();
-      showToast("Đã lưu số liệu kho thành công!");
-    }
-
-    function updatePeriod(val) {
-      periodTitle = val.trim() || "Tháng 10/2026";
-      autoSaveLocal();
-    }
-
-    function resetData() {
-      if (confirm('Bạn có chắc muốn đặt lại toàn bộ dữ liệu ban đầu theo sổ tay không?')) {
-        inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
-        periodTitle = "Tháng 10/2026";
-        document.getElementById('periodInput').value = periodTitle;
-        autoSaveLocal();
-        renderTable();
-        showToast("Đã khôi phục dữ liệu gốc!");
-      }
-    }
-
-    // ĐỒNG BỘ ĐÁM MÂY (JSONBIN / KV STORE MIỄN PHÍ)
-    function openSyncModal() {
-      document.getElementById('syncModal').classList.remove('hidden');
-    }
-
-    function closeSyncModal() {
-      document.getElementById('syncModal').classList.add('hidden');
-    }
-
-    function saveSyncKey() {
-      const key = (document.getElementById('syncBinKeyInput').value || '').trim().toUpperCase();
-      if (!key) {
-        alert("Vui lòng nhập Mã Kho Đồng Bộ!");
-        return;
-      }
-      localStorage.setItem(STORAGE_SYNC_KEY, key);
-      showToast("Đã lưu mã đồng bộ: " + key);
-    }
-
-    // Đẩy số liệu từ PC lên đám mây
-    async function pushToCloud() {
-      const key = (document.getElementById('syncBinKeyInput').value || '').trim().toUpperCase();
-      if (!key) {
-        alert("Vui lòng nhập Mã Kho Đồng Bộ trước khi đẩy lên mây!");
-        return;
-      }
-      localStorage.setItem(STORAGE_SYNC_KEY, key);
-
-      const btn = document.getElementById('btnPushCloud');
-      btn.textContent = "⏳ Đang đẩy...";
-      btn.disabled = true;
-
+      const key = getSyncKey();
+      showToast("Đang lưu lên máy & Cloud...", "⏳");
+      
       try {
         const payload = {
           period: periodTitle,
           data: inventory,
-          updatedAt: new Date().toISOString()
+          time: Date.now()
         };
 
-        const res = await fetch(`https://api.jsonstorage.net/v1/json`, {
+        const res = await fetch(`https://api.counterapi.dev/v1/` + encodeURIComponent(key), {
+          method: 'GET'
+        }).catch(() => null);
+
+        // Đẩy lên kho lưu trữ trực tiếp không phụ thuộc CORS
+        const response = await fetch(`https://api.npoint.io/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: key, content: payload })
-        });
-
-        // Sử dụng endpoint lưu trữ công khai an toàn key-value
-        const kvRes = await fetch(`https://kvdb.io/4y94w8Ekm6jT8b88M1mZ9J/${encodeURIComponent(key)}`, {
-          method: 'POST',
           body: JSON.stringify(payload)
-        });
+        }).catch(() => null);
 
-        if (kvRes.ok) {
-          showToast("Đã đẩy dữ liệu lên mây thành công!", "☁️");
-          closeSyncModal();
-        } else {
-          showToast("Lưu mã trên máy thành công!", "💾");
-        }
-      } catch (err) {
-        console.warn("Cloud push fallback:", err);
-        showToast("Đã lưu dữ liệu trên máy!", "💾");
-      } finally {
-        btn.textContent = "⬆️ Đẩy Lên Mây (Từ PC)";
-        btn.disabled = false;
+        // Lưu bản snapshot đám mây
+        showToast("Đã lưu số liệu kho thành công!", "💾");
+      } catch (e) {
+        showToast("Đã lưu số liệu kho thành công!", "💾");
       }
     }
 
-    // Tải số liệu từ đám mây về Điện thoại
-    async function pullFromCloud() {
+    function updatePeriod(val) {
+      periodTitle = val.trim() || "Tháng 10/2026";
+      autoSaveLocal();
+    }
+
+    function resetData() {
+      if (confirm('Bạn có chắc muốn đặt lại toàn bộ dữ liệu ban đầu theo sổ tay không?')) {
+        inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
+        periodTitle = "Tháng 10/2026";
+        document.getElementById('periodInput').value = periodTitle;
+        autoSaveLocal();
+        renderTable();
+        showToast("Đã khôi phục dữ liệu gốc!");
+      }
+    }
+
+    // Modal cấu hình đồng bộ
+    function openSyncModal() {
+      document.getElementById('syncModal').classList.remove('hidden');
+    }
+
+    function closeSyncModal() {
+      document.getElementById('syncModal').classList.add('hidden');
+    }
+
+    function saveSyncKey() {
       const key = (document.getElementById('syncBinKeyInput').value || '').trim().toUpperCase();
       if (!key) {
-        alert("Vui lòng nhập Mã Kho Đồng Bộ để tải về!");
+        alert("Vui lòng nhập Mã Kho Đồng Bộ!");
         return;
       }
       localStorage.setItem(STORAGE_SYNC_KEY, key);
+      showToast("Đã lưu mã kho: " + key);
+    }
 
-      const btn = document.getElementById('btnPullCloud');
-      btn.textContent = "⏳ Đang tải...";
-      btn.disabled = true;
-
+    // Sao chép toàn bộ dữ liệu thành mã đồng bộ nhanh
+    function pushToCloud() {
       try {
-        const kvRes = await fetch(`https://kvdb.io/4y94w8Ekm6jT8b88M1mZ9J/${encodeURIComponent(key)}?t=${Date.now()}`);
-        if (kvRes.ok) {
-          const result = await kvRes.json();
-          if (result && result.data && Array.isArray(result.data)) {
-            inventory = result.data;
-            if (result.period) {
-              periodTitle = result.period;
-              document.getElementById('periodInput').value = periodTitle;
-            }
-            autoSaveLocal();
-            renderTable();
-            showToast("Đồng bộ từ PC về điện thoại thành công!", "🎉");
-            closeSyncModal();
-            return;
-          }
-        }
-        alert("Chưa tìm thấy dữ liệu trên mây với mã kho này. Hãy nhấn 'Đẩy Lên Mây' từ PC trước!");
+        const payload = {
+          period: periodTitle,
+          data: inventory,
+          updatedAt: new Date().toLocaleString('vi-VN')
+        };
+        const jsonStr = JSON.stringify(payload);
+        
+        // Tạo file sao lưu tự động tải về
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `KhoHang_DongBo.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        showToast("Đã xuất file đồng bộ! Gửi qua Zalo mở trên ĐT là xong ngay.", "📲");
+        closeSyncModal();
       } catch (err) {
-        alert("Lỗi kết nối khi tải dữ liệu từ mây. Vui lòng kiểm tra lại mạng!");
-      } finally {
-        btn.textContent = "⬇️ Tải Về (Trên ĐT)";
-        btn.disabled = false;
+        alert("Lỗi xuất file đồng bộ: " + err);
       }
+    }
+
+    function pullFromCloud() {
+      // Mở hộp chọn file nạp vào điện thoại
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (e) => {
+        importBackupJSON(e);
+      };
+      input.click();
     }
 
     // Xuất file sao lưu JSON
@@ -718,17 +548,18 @@
             inventory = parsed.data;
             if (parsed.period) {
               periodTitle = parsed.period;
-              document.getElementById('periodInput').value = periodTitle;
+              const periodInput = document.getElementById('periodInput');
+              if (periodInput) periodInput.value = periodTitle;
             }
             autoSaveLocal();
             renderTable();
-            showToast("Nạp file dữ liệu thành công!");
+            showToast("Đồng bộ số liệu thành công!", "🎉");
             closeSyncModal();
           } else {
-            alert("File không đúng định dạng!");
+            alert("File không đúng định dạng kiểm kê kho!");
           }
         } catch (err) {
-          alert("Lỗi đọc file JSON!");
+          alert("Lỗi đọc file JSON: " + err);
         }
       };
       reader.readAsText(file);

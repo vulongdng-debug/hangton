@@ -33,17 +33,23 @@
 
     /* Khung bảng có thanh cuộn & Ghim tiêu đề sticky */
     .table-container {
-      max-height: 70vh;
+      max-height: 72vh;
       overflow-y: auto;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      border-radius: 0.75rem;
     }
 
     .sticky-header th {
       position: sticky;
       top: 0;
       z-index: 15;
-      background-color: #1e293b; /* slate-800 */
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    }
+
+    /* Focus highlight cho dòng đang nhập */
+    tbody tr:focus-within {
+      background-color: #e0e7ff !important; /* indigo-100 */
     }
 
     /* Kích thước chữ và khoảng cách ô vừa khít màn hình dọc điện thoại */
@@ -96,7 +102,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col pb-16">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col pb-16">
 
   <!-- Toast Thông báo Lưu -->
   <div id="saveToast" class="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl shadow-xl flex items-center gap-2 text-xs sm:text-sm transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-4">
@@ -104,48 +110,55 @@
     <span>Đã lưu số liệu kho thành công!</span>
   </div>
 
-  <!-- Header Thanh tác vụ chính -->
-  <header class="bg-indigo-900 text-white sticky top-0 z-30 shadow-md">
-    <div class="max-w-7xl mx-auto px-2.5 sm:px-4 py-2 sm:py-2.5 flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2">
-        <span class="text-xl sm:text-2xl">📦</span>
+  <!-- Header Thanh tác vụ chính (Giao diện PC đẹp mắt, sang trọng) -->
+  <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white sticky top-0 z-30 shadow-lg border-b border-indigo-800/40">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-lg sm:text-xl shadow-inner">
+          📦
+        </div>
         <div>
-          <h1 class="text-sm sm:text-lg font-bold tracking-tight leading-tight">Kiểm Kê Kho Online</h1>
-          <div class="flex items-center gap-1">
-            <span class="text-indigo-200 text-[11px] sm:text-xs">Kỳ:</span>
+          <h1 class="text-sm sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Kiểm Kê Kho Trực Tuyến
+            <span class="hidden sm:inline-flex items-center gap-1 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium px-2 py-0.5 rounded-full">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Tự động lưu
+            </span>
+          </h1>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-indigo-200 text-[11px] sm:text-xs">Kỳ kiểm kê:</span>
             <input 
               type="text" 
               id="periodInput" 
               value="Tháng 10/2026"
               onchange="updatePeriod(this.value)"
-              class="bg-indigo-950/80 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-indigo-400/40 text-[11px] sm:text-xs focus:outline-none w-28 sm:w-36"
+              class="bg-black/30 hover:bg-black/50 text-amber-300 font-bold px-2 py-0.5 rounded-md border border-indigo-400/30 text-[11px] sm:text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 w-28 sm:w-36 transition"
               title="Bấm để sửa tháng/năm kiểm kê"
             />
           </div>
         </div>
       </div>
 
-      <!-- Cụm nút tác vụ -->
-      <div class="flex items-center gap-1.5 no-print">
-        <button onclick="handleManualSave()" class="bg-amber-400 hover:bg-amber-500 active:scale-95 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow flex items-center gap-1 text-xs sm:text-sm transition">
+      <!-- Cụm nút tác vụ trên PC & Mobile -->
+      <div class="flex items-center gap-1.5 sm:gap-2 no-print">
+        <button onclick="handleManualSave()" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-md flex items-center gap-1.5 text-xs sm:text-sm transition">
           💾 <span>Lưu Lại</span>
         </button>
-        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold px-2.5 py-1.5 rounded-xl shadow text-xs sm:text-sm transition flex items-center gap-1">
+        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-md text-xs sm:text-sm transition flex items-center gap-1">
           📊 <span>Excel</span>
         </button>
-        <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-semibold px-2.5 py-1.5 rounded-xl shadow text-xs sm:text-sm transition flex items-center gap-1">
+        <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-semibold px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-md text-xs sm:text-sm transition flex items-center gap-1">
           📄 <span>PDF</span>
         </button>
-        <button onclick="resetData()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 px-2 py-1.5 rounded-xl text-xs transition" title="Khôi phục danh sách gốc từ sổ">
+        <button onclick="resetData()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 border border-slate-700 px-2.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm transition" title="Khôi phục danh sách gốc từ sổ">
           🔄
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Thanh tìm kiếm & bộ lọc -->
-  <div class="bg-white border-b border-slate-200 shadow-xs py-2 px-2.5 sm:px-4 no-print sticky top-[49px] sm:top-[57px] z-20">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
+  <!-- Thanh tìm kiếm & bộ lọc (Giao diện phẳng, tinh gọn) -->
+  <div class="bg-white border-b border-slate-200/80 shadow-xs py-2 px-3 sm:px-6 no-print sticky top-[53px] sm:top-[61px] z-20 backdrop-blur-md bg-white/95">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
       
       <!-- Ô tìm kiếm -->
       <div class="relative flex-1">
@@ -153,93 +166,111 @@
         <input
           type="text"
           id="searchInput"
-          placeholder="Tìm tên hàng hoặc số TT..."
+          placeholder="Tìm kiếm theo STT hoặc tên mặt hàng (Enter để nhảy dòng)..."
           oninput="renderTable()"
-          class="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-100 bg-slate-50 transition"
+          class="w-full pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-100 bg-slate-50/80 hover:bg-white focus:bg-white transition"
         />
       </div>
 
       <!-- Bộ lọc nhanh -->
       <div class="flex items-center gap-1.5 overflow-x-auto text-xs">
-        <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow-xs whitespace-nowrap">Tất cả (250)</button>
-        <button onclick="setFilter('has_stock')" id="filter-has_stock" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap">Có SL</button>
-        <button onclick="setFilter('no_stock')" id="filter-no_stock" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap">Chưa kiểm</button>
+        <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-xs whitespace-nowrap">Tất cả (250)</button>
+        <button onclick="setFilter('has_stock')" id="filter-has_stock" class="filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap">Đã có SL</button>
+        <button onclick="setFilter('no_stock')" id="filter-no_stock" class="filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap">Chưa có SL</button>
       </div>
 
     </div>
   </div>
 
   <!-- Nội dung bảng kiểm kê toàn màn hình -->
-  <main class="max-w-7xl w-full mx-auto px-1 sm:px-4 py-2 sm:py-3 flex-1 flex flex-col">
+  <main class="max-w-7xl w-full mx-auto px-2 sm:px-6 py-3 sm:py-4 flex-1 flex flex-col">
     
-    <!-- Hướng dẫn nhanh -->
-    <div class="no-print mb-2 text-[11px] sm:text-xs text-slate-600 bg-amber-50 border border-amber-200 rounded-xl p-2 flex items-center justify-between gap-1">
-      <div>
-        💡 <b>Mẹo nhập nhanh:</b> Cột <b>SL Nháp</b> gõ phép cộng ví dụ <code class="bg-amber-100 text-red-600 px-1 font-bold rounded">5+6+23</code> sẽ tự động tính ra cột <b>Số Lượng</b>. Bấm <b>💾 Lưu Lại</b> bất cứ khi nào để lưu vào máy.
+    <!-- Hướng dẫn nhanh phím Enter & tính năng thời gian thực -->
+    <div class="no-print mb-3 text-xs sm:text-sm text-slate-700 bg-indigo-50/80 border border-indigo-200/70 rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+      <div class="flex items-center gap-2">
+        <span class="text-base sm:text-lg">⚡</span>
+        <span>
+          <b>Nhập liệu siêu tốc:</b> Nhập xong Số Lượng bấm <kbd class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[11px] font-mono shadow-xs text-indigo-700 font-bold">Enter</kbd> để nhảy xuống dòng kế tiếp. Dữ liệu lưu <b>tức thì trong thời gian thực</b> (F5 không mất).
+        </span>
+      </div>
+      <div id="realtimeStatus" class="hidden sm:flex items-center gap-1.5 text-xs text-emerald-700 font-semibold whitespace-nowrap">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Đang đồng bộ
       </div>
     </div>
 
-    <!-- BẢNG DỮ LIỆU ĐẦY ĐỦ: GHIM TIÊU ĐỀ (STICKY) & HIỂN THỊ TRỌN VẸN TRÊN MÀN HÌNH DỌC ĐIỆN THOẠI -->
-    <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden print-shadow-none">
+    <!-- BẢNG DỮ LIỆU ĐẦY ĐỦ: GHIM TIÊU ĐỀ (STICKY) & ĐẸP MẮT TRÊN PC -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-shadow-none">
       <div class="table-container">
         <table class="w-full text-left border-collapse min-w-[350px] sm:min-w-[650px]" id="inventoryTable">
           <thead class="sticky-header">
             <tr class="text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider">
-              <th class="compact-cell col-tt text-center border-b border-slate-700">TT</th>
-              <th class="compact-cell col-name border-b border-slate-700">Tên Hàng</th>
-              <th class="compact-cell col-draft text-right bg-amber-900/60 border-b border-slate-700" title="Gõ phép cộng kiểm kê, vd: 5+6+23">SL Nháp</th>
-              <th class="compact-cell col-qty text-right bg-indigo-950/70 border-b border-slate-700">Số Lượng</th>
-              <th class="compact-cell col-price text-right border-b border-slate-700">Đơn Giá</th>
-              <th class="compact-cell col-total text-right border-b border-slate-700">Thành Tiền</th>
+              <th class="compact-cell col-tt text-center py-3 px-2 border-b border-slate-700">TT</th>
+              <th class="compact-cell col-name py-3 px-3 sm:px-4 border-b border-slate-700">Tên Hàng (Sửa trực tiếp)</th>
+              <th class="compact-cell col-draft text-right py-3 px-2 sm:px-3 bg-amber-950/40 border-b border-slate-700" title="Gõ phép cộng kiểm kê, vd: 5+6+23">SL Nháp</th>
+              <th class="compact-cell col-qty text-right py-3 px-2 sm:px-3 bg-indigo-950/70 border-b border-slate-700">Số Lượng</th>
+              <th class="compact-cell col-price text-right py-3 px-2 sm:px-3 border-b border-slate-700">Đơn Giá</th>
+              <th class="compact-cell col-total text-right py-3 px-3 sm:px-4 border-b border-slate-700">Thành Tiền</th>
             </tr>
           </thead>
-          <tbody id="tableBody" class="divide-y divide-slate-200 font-medium text-xs sm:text-sm">
+          <tbody id="tableBody" class="divide-y divide-slate-100 font-medium text-xs sm:text-sm">
             <!-- Render bằng JavaScript -->
           </tbody>
         </table>
       </div>
 
-      <div id="emptyMessage" class="hidden py-8 text-center text-slate-400 text-xs sm:text-sm">
-        Không tìm thấy mặt hàng nào phù hợp!
+      <div id="emptyMessage" class="hidden py-10 text-center text-slate-400 text-xs sm:text-sm">
+        Không tìm thấy mặt hàng nào phù hợp với từ khóa tìm kiếm!
       </div>
     </div>
 
-    <!-- KHU VỰC THỐNG KÊ (DƯỚI CÙNG THEO YÊU CẦU) -->
-    <section class="mt-6 pt-3 border-t border-slate-300">
-      <h2 class="text-sm sm:text-base font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
-        <span>📊</span> TỔNG HỢP VÀ THỐNG KÊ KHO
-      </h2>
+    <!-- KHU VỰC THỐNG KÊ (DƯỚI CÙNG THEO YÊU CẦU - THIẾT KẾ HIỆN ĐẠI CHO PC) -->
+    <section class="mt-8 pt-4 border-t border-slate-200">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
+          <span>📊</span> TỔNG HỢP VÀ THỐNG KÊ KHO
+        </h2>
+        <span class="text-xs text-slate-500 hidden sm:inline">Cập nhật tự động theo thời gian thực</span>
+      </div>
 
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         
-        <div class="bg-white rounded-xl p-2.5 sm:p-4 shadow border border-slate-200">
-          <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Tổng mặt hàng</span>
-          <div class="mt-1 flex items-baseline justify-between">
-            <span id="statTotalItems" class="text-lg sm:text-2xl font-black text-slate-800">250</span>
-            <span class="text-[10px] sm:text-xs text-slate-400">mục</span>
+        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-xs border border-slate-200/90 hover:shadow-md transition">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Tổng mặt hàng</span>
+            <span class="text-lg text-slate-400">📋</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="statTotalItems" class="text-xl sm:text-2xl font-black text-slate-800">250</span>
+            <span class="text-[11px] text-slate-400 font-medium">danh mục</span>
           </div>
         </div>
 
-        <div class="bg-white rounded-xl p-2.5 sm:p-4 shadow border border-slate-200">
-          <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Đã kiểm đếm tồn</span>
-          <div class="mt-1 flex items-baseline justify-between">
-            <span id="statCountedItems" class="text-lg sm:text-2xl font-black text-indigo-600">0</span>
-            <span id="statProgress" class="text-[10px] sm:text-xs text-indigo-500 font-bold">0%</span>
+        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-xs border border-slate-200/90 hover:shadow-md transition">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Tiến độ kiểm kho</span>
+            <span class="text-lg text-indigo-500">🎯</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="statCountedItems" class="text-xl sm:text-2xl font-black text-indigo-600">0</span>
+            <span id="statProgress" class="text-[11px] text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-full">0%</span>
           </div>
         </div>
 
-        <div class="bg-white rounded-xl p-2.5 sm:p-4 shadow border border-slate-200">
-          <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Tổng số lượng tồn</span>
-          <div class="mt-1 flex items-baseline justify-between">
-            <span id="statTotalQty" class="text-lg sm:text-2xl font-black text-emerald-600">0</span>
-            <span class="text-[10px] sm:text-xs text-slate-400">sp</span>
+        <div class="bg-white rounded-xl p-3 sm:p-5 shadow-xs border border-slate-200/90 hover:shadow-md transition">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Tổng sản phẩm tồn</span>
+            <span class="text-lg text-emerald-500">📦</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="statTotalQty" class="text-xl sm:text-2xl font-black text-emerald-600">0</span>
+            <span class="text-[11px] text-slate-400 font-medium">sản phẩm</span>
           </div>
         </div>
 
-        <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-xl p-2.5 sm:p-4 shadow text-white col-span-2 lg:col-span-1">
-          <span class="text-indigo-200 text-[11px] sm:text-xs font-semibold block">TỔNG THÀNH TIỀN (VNĐ)</span>
-          <div class="mt-1">
-            <div id="statTotalAmount" class="text-lg sm:text-2xl font-black text-amber-300 tracking-tight">0 ₫</div>
+        <div class="bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 rounded-xl p-3 sm:p-5 shadow-md text-white col-span-2 lg:col-span-1">
+          <span class="text-indigo-200 text-[11px] sm:text-xs font-semibold block uppercase tracking-wider">Tổng giá trị tồn kho</span>
+          <div class="mt-2">
+            <div id="statTotalAmount" class="text-xl sm:text-2xl font-black text-amber-300 tracking-tight">0 ₫</div>
           </div>
         </div>
 
@@ -286,9 +317,14 @@
       }
     }
 
+    // TÍNH NĂNG THỜI GIAN THỰC (REAL-TIME SAVE): Tự động lưu mọi thay đổi ngay lập tức
     function saveData(notify = false) {
-      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
-      localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
+      try {
+        localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
+        localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
+      } catch (err) {
+        console.error("Lỗi khi lưu vào LocalStorage:", err);
+      }
       updateStats();
 
       if (notify) {
@@ -341,7 +377,28 @@
       return valid ? Math.round(sum * 100) / 100 : null;
     }
 
-    function handleDraftChange(tt, draftVal) {
+    // XỬ LÝ PHÍM ENTER: Tự động nhảy xuống dòng tiếp theo cùng cột
+    function handleKeyDownNav(event, currentTT, field) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+
+        // Tìm tất cả các ô cùng loại trong các dòng đang hiển thị
+        const inputs = Array.from(document.querySelectorAll(`input[data-field="${field}"]`));
+        const currentIndex = inputs.findIndex(input => input.dataset.tt == currentTT);
+
+        if (currentIndex !== -1 && currentIndex + 1 < inputs.length) {
+          const nextInput = inputs[currentIndex + 1];
+          nextInput.focus();
+          // Bôi đen toàn bộ số để tiện gõ đè số mới
+          if (typeof nextInput.select === 'function') {
+            nextInput.select();
+          }
+        }
+      }
+    }
+
+    // Cập nhật SL Nháp trong thời gian thực
+    function handleDraftInput(tt, draftVal) {
       const item = inventory.find(i => i.tt === tt);
       if (!item) return;
 
@@ -352,11 +409,26 @@
       } else if (draftVal.trim() === '') {
         item.sl = '';
       }
+
+      // Cập nhật giá trị hiển thị ở ô SL và Thành tiền tương ứng ngay lập tức
+      const qtyInput = document.getElementById(`sl-input-${tt}`);
+      if (qtyInput) {
+        qtyInput.value = item.sl !== '' ? item.sl : '';
+      }
+
+      const totalCell = document.getElementById(`total-cell-${tt}`);
+      if (totalCell) {
+        const qty = Number(item.sl) || 0;
+        const price = Number(item.dg) || 0;
+        const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
+        totalCell.textContent = lineTotal !== null ? formatCurrency(lineTotal) : '-';
+      }
+
       saveData(false);
-      renderTable();
     }
 
-    function handleNameChange(tt, newName) {
+    // Cập nhật Tên Hàng trong thời gian thực
+    function handleNameInput(tt, newName) {
       const item = inventory.find(i => i.tt === tt);
       if (item) {
         item.name = newName;
@@ -364,17 +436,27 @@
       }
     }
 
-    function updateField(tt, field, val) {
+    // Cập nhật Số Lượng hoặc Đơn Giá trong thời gian thực
+    function handleFieldInput(tt, field, val) {
       const item = inventory.find(i => i.tt === tt);
-      if (item) {
-        if (val === '' || val === null) {
-          item[field] = '';
-        } else {
-          item[field] = parseFloat(val) || 0;
-        }
-        saveData(false);
-        renderTable();
+      if (!item) return;
+
+      if (val === '' || val === null) {
+        item[field] = '';
+      } else {
+        item[field] = parseFloat(val) || 0;
       }
+
+      // Cập nhật cột Thành Tiền ngay tức thì mà không cần render lại cả bảng
+      const totalCell = document.getElementById(`total-cell-${tt}`);
+      if (totalCell) {
+        const qty = Number(item.sl) || 0;
+        const price = Number(item.dg) || 0;
+        const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
+        totalCell.textContent = lineTotal !== null ? formatCurrency(lineTotal) : '-';
+      }
+
+      saveData(false);
     }
 
     function formatNumber(num) {
@@ -393,15 +475,15 @@
       ['all', 'has_stock', 'no_stock'].forEach(t => {
         const btn = document.getElementById('filter-' + t);
         if (t === type) {
-          btn.className = 'filter-btn px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow-xs whitespace-nowrap';
+          btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-xs whitespace-nowrap';
         } else {
-          btn.className = 'filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
+          btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
         }
       });
       renderTable();
     }
 
-    // RENDER BẢNG TOÀN DIỆN
+    // RENDER BẢNG: ĐẸP MẮT TRÊN PC, PHÍM ENTER THÔNG MINH, NHẬP LIỆU THỜI GIAN THỰC
     function renderTable() {
       const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
       const tbody = document.getElementById('tableBody');
@@ -424,63 +506,80 @@
         const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
 
         const tr = document.createElement('tr');
-        tr.className = index % 2 === 0 ? 'bg-white hover:bg-indigo-50/50' : 'bg-slate-50/70 hover:bg-indigo-50/50';
+        tr.className = index % 2 === 0 
+          ? 'bg-white hover:bg-indigo-50/60 transition-colors' 
+          : 'bg-slate-50/70 hover:bg-indigo-50/60 transition-colors';
 
         tr.innerHTML = `
           <!-- TT -->
-          <td class="compact-cell col-tt text-center text-slate-400 font-bold border-b border-slate-200">
+          <td class="compact-cell col-tt text-center text-slate-400 font-bold border-b border-slate-200/80">
             ${item.tt}
           </td>
 
           <!-- Tên hàng (Sửa trực tiếp) -->
-          <td class="compact-cell col-name border-b border-slate-200">
+          <td class="compact-cell col-name border-b border-slate-200/80">
             <input 
               type="text"
+              data-field="name"
+              data-tt="${item.tt}"
               value="${item.name || ''}"
-              onchange="handleNameChange(${item.tt}, this.value)"
-              placeholder="Tên..."
-              class="compact-input compact-name w-full font-bold text-slate-800 bg-transparent hover:bg-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded border border-transparent hover:border-slate-300 transition"
+              oninput="handleNameInput(${item.tt}, this.value)"
+              onkeydown="handleKeyDownNav(event, ${item.tt}, 'name')"
+              placeholder="Tên mặt hàng..."
+              class="compact-input compact-name w-full font-semibold text-slate-800 bg-transparent hover:bg-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded border border-transparent hover:border-slate-300 transition px-2 py-1"
             />
           </td>
 
           <!-- SL Nháp (vd: 5+6+23) -->
-          <td class="compact-cell col-draft text-right border-b border-slate-200 bg-amber-50/40">
+          <td class="compact-cell col-draft text-right border-b border-slate-200/80 bg-amber-50/40">
             <input
               type="text"
+              data-field="draft"
+              data-tt="${item.tt}"
               value="${item.draft || ''}"
-              placeholder="nháp"
-              onchange="handleDraftChange(${item.tt}, this.value)"
-              class="compact-input w-full text-right font-medium text-amber-900 bg-white border border-amber-300 rounded focus:outline-none focus:ring-1 focus:ring-amber-500"
-              title="Gõ phép cộng kiểm kê"
+              placeholder="vd: 5+6"
+              oninput="handleDraftInput(${item.tt}, this.value)"
+              onkeydown="handleKeyDownNav(event, ${item.tt}, 'draft')"
+              class="compact-input w-full text-right font-medium text-amber-900 bg-white border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-400 px-2 py-1 text-xs sm:text-sm"
+              title="Gõ phép cộng kiểm kê, Enter để nhảy dòng"
             />
           </td>
 
-          <!-- Số lượng (tự tính hoặc gõ tay) -->
-          <td class="compact-cell col-qty text-right border-b border-slate-200">
+          <!-- Số lượng (tự tính hoặc gõ tay - HỖ TRỢ ENTER XUỐNG DÒNG) -->
+          <td class="compact-cell col-qty text-right border-b border-slate-200/80 bg-indigo-50/30">
             <input
+              id="sl-input-${item.tt}"
               type="number"
               step="any"
+              data-field="sl"
+              data-tt="${item.tt}"
               value="${item.sl !== null && item.sl !== undefined ? item.sl : ''}"
               placeholder="0"
-              onchange="updateField(${item.tt}, 'sl', this.value)"
-              class="compact-input w-full text-right font-black text-indigo-900 bg-white border border-slate-300 rounded focus:border-indigo-600 focus:outline-none"
+              oninput="handleFieldInput(${item.tt}, 'sl', this.value)"
+              onkeydown="handleKeyDownNav(event, ${item.tt}, 'sl')"
+              class="compact-input w-full text-right font-bold text-indigo-900 bg-white border border-indigo-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 focus:outline-none rounded px-2 py-1 text-xs sm:text-sm shadow-xs"
+              title="Nhấn Enter để chuyển xuống dòng kế tiếp"
             />
           </td>
 
-          <!-- Đơn giá -->
-          <td class="compact-cell col-price text-right border-b border-slate-200">
+          <!-- Đơn giá (HỖ TRỢ ENTER XUỐNG DÒNG) -->
+          <td class="compact-cell col-price text-right border-b border-slate-200/80">
             <input
               type="number"
               step="any"
+              data-field="dg"
+              data-tt="${item.tt}"
               value="${item.dg !== null && item.dg !== undefined ? item.dg : ''}"
               placeholder="0"
-              onchange="updateField(${item.tt}, 'dg', this.value)"
-              class="compact-input w-full text-right font-medium text-slate-800 bg-white border border-slate-300 rounded focus:border-indigo-600 focus:outline-none"
+              oninput="handleFieldInput(${item.tt}, 'dg', this.value)"
+              onkeydown="handleKeyDownNav(event, ${item.tt}, 'dg')"
+              class="compact-input w-full text-right font-medium text-slate-800 bg-white border border-slate-300 rounded focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none px-2 py-1 text-xs sm:text-sm shadow-xs"
+              title="Nhấn Enter để chuyển xuống dòng kế tiếp"
             />
           </td>
 
           <!-- Thành tiền -->
-          <td class="compact-cell col-total text-right font-bold text-indigo-700 border-b border-slate-200 whitespace-nowrap">
+          <td id="total-cell-${item.tt}" class="compact-cell col-total text-right font-bold text-indigo-700 border-b border-slate-200/80 whitespace-nowrap px-3">
             ${lineTotal !== null ? formatCurrency(lineTotal) : '-'}
           </td>
         `;

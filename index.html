@@ -121,7 +121,7 @@
           <h1 class="text-sm sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
             Kiểm Kê Kho Trực Tuyến
             <span id="cloudStatusBadge" class="inline-flex items-center gap-1 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium px-2 py-0.5 rounded-full">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sẵn sàng
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đã kết nối Cloud
             </span>
           </h1>
           <div class="flex items-center gap-1.5 mt-0.5">
@@ -140,11 +140,11 @@
 
       <!-- Cụm nút tác vụ trên PC & Mobile -->
       <div class="flex items-center gap-1.5 sm:gap-2 no-print">
-        <button onclick="openSyncModal()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-md flex items-center gap-1.5 text-xs sm:text-sm transition border border-indigo-400/40" title="Đồng bộ dữ liệu giữa máy tính và điện thoại">
-          ☁️ <span class="hidden sm:inline">Đồng Bộ</span>
+        <button onclick="syncNowFromCloud()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl shadow-md flex items-center gap-1 text-xs sm:text-sm transition border border-indigo-400/40" title="Nhấn để lấy số liệu mới nhất từ PC">
+          🔄 <span>Lấy Dữ Liệu</span>
         </button>
         <button onclick="handleManualSave()" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-md flex items-center gap-1.5 text-xs sm:text-sm transition">
-          💾 <span>Lưu Lại</span>
+          💾 <span>Lưu Lên Mây</span>
         </button>
         <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl shadow-md text-xs sm:text-sm transition flex items-center gap-1">
           📊 <span>Excel</span>
@@ -152,8 +152,8 @@
         <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-semibold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl shadow-md text-xs sm:text-sm transition flex items-center gap-1">
           📄 <span>PDF</span>
         </button>
-        <button onclick="resetData()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 border border-slate-700 px-2 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm transition" title="Khôi phục danh sách gốc từ sổ">
-          🔄
+        <button onclick="openSyncModal()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 border border-slate-700 px-2.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm transition" title="Cài đặt mã kho đồng bộ">
+          ⚙️
         </button>
       </div>
     </div>
@@ -360,13 +360,177 @@
     const STORAGE_DATA_KEY = 'inventory_stock_data_v4';
     const STORAGE_PERIOD_KEY = 'inventory_period_v4';
     const STORAGE_SYNC_KEY = 'inventory_sync_bin_key';
+    const DEFAULT_STORE_KEY = 'KHO_HANG_CHUNG_2026';
 
-    function loadData() {
+    function getSyncKey() {
+      return (localStorage.getItem(STORAGE_SYNC_KEY) || DEFAULT_STORE_KEY).trim().toUpperCase();
+    }
+
+    // Tự động tải từ Cloud ngay khi mở trang web (trên cả PC và Điện thoại)
+    async function loadData() {
       const savedPeriod = localStorage.getItem(STORAGE_PERIOD_KEY);
       if (savedPeriod) {
         periodTitle = savedPeriod;
         document.getElementById('periodInput').value = periodTitle;
       }
+
+      document.getElementById('syncBinKeyInput').value = getSyncKey();
+
+      // Đọc tạm dữ liệu cục bộ trước để tránh màn hình trống
+      const savedData = localStorage.getItem(STORAGE_DATA_KEY);
+      if (savedData) {
+        try {
+          inventory = JSON.parse(savedData);
+        } catch(e) {
+          inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
+        }
+      } else {
+        inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
+      }
+      renderTable();
+
+      // Tự động kéo dữ liệu mới nhất từ Cloud về ngay khi vừa tải trang
+      await syncNowFromCloud(true);
+    }
+
+    // Tự động lưu LocalStorage & đẩy thẳng lên Cloud
+    let autoCloudTimer = null;
+    function autoSaveLocal() {
+      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
+      localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
+      updateStats();
+
+      // Tự động gửi lên mây sau 800ms kể từ khi ngừng gõ phím
+      clearTimeout(autoCloudTimer);
+      autoCloudTimer = setTimeout(() => {
+        pushDataToCloudSilent();
+      }, 800);
+    }
+
+    // Đồng bộ ngầm lên server
+    async function pushDataToCloudSilent() {
+      const key = getSyncKey();
+      try {
+        const payload = {
+          period: periodTitle,
+          data: inventory,
+          updatedAt: Date.now()
+        };
+        await fetch(`https://kvdb.io/4y94w8Ekm6jT8b88M1mZ9J/${encodeURIComponent(key)}`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const badge = document.getElementById('cloudStatusBadge');
+        if (badge) {
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đã lưu mây`;
+        }
+      } catch (e) {
+        console.warn("Cloud autosave offline, saved to local storage.");
+      }
+    }
+
+    // Kéo dữ liệu từ Cloud về
+    async function syncNowFromCloud(silent = false) {
+      const key = getSyncKey();
+      const badge = document.getElementById('cloudStatusBadge');
+      if (badge && !silent) {
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-spin"></span> Đang tải...`;
+      }
+
+      try {
+        const res = await fetch(`https://kvdb.io/4y94w8Ekm6jT8b88M1mZ9J/${encodeURIComponent(key)}?nocache=${Date.now()}`);
+        if (res.ok) {
+          const remote = await res.json();
+          if (remote && Array.isArray(remote.data) && remote.data.length > 0) {
+            inventory = remote.data;
+            if (remote.period) {
+              periodTitle = remote.period;
+              document.getElementById('periodInput').value = periodTitle;
+            }
+            localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
+            localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
+            renderTable();
+            if (badge) {
+              badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Khớp với Cloud`;
+            }
+            if (!silent) {
+              showToast("Đã cập nhật số liệu mới nhất từ PC!", "☁️");
+            }
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Fetch from cloud failed:", err);
+      }
+      if (badge) {
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Ngoại tuyến`;
+      }
+    }
+
+    function showToast(msg, icon = "✅") {
+      const toast = document.getElementById('saveToast');
+      document.getElementById('toastMsg').textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2000);
+    }
+
+    async function handleManualSave() {
+      autoSaveLocal();
+      showToast("Đang lưu lên Cloud...", "⏳");
+      await pushDataToCloudSilent();
+      showToast("Đã lưu số liệu lên Cloud cho điện thoại!", "☁️");
+    }
+
+    function updatePeriod(val) {
+      periodTitle = val.trim() || "Tháng 10/2026";
+      autoSaveLocal();
+    }
+
+    function resetData() {
+      if (confirm('Bạn có chắc muốn đặt lại toàn bộ dữ liệu ban đầu theo sổ tay không?')) {
+        inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
+        periodTitle = "Tháng 10/2026";
+        document.getElementById('periodInput').value = periodTitle;
+        autoSaveLocal();
+        renderTable();
+        showToast("Đã khôi phục dữ liệu gốc!");
+      }
+    }
+
+    // Modal cấu hình mã kho
+    function openSyncModal() {
+      document.getElementById('syncModal').classList.remove('hidden');
+    }
+
+    function closeSyncModal() {
+      document.getElementById('syncModal').classList.add('hidden');
+    }
+
+    function saveSyncKey() {
+      const key = (document.getElementById('syncBinKeyInput').value || '').trim().toUpperCase();
+      if (!key) {
+        alert("Vui lòng nhập Mã Kho Đồng Bộ!");
+        return;
+      }
+      localStorage.setItem(STORAGE_SYNC_KEY, key);
+      showToast("Đã cập nhật mã kho: " + key);
+      syncNowFromCloud(false);
+    }
+
+    async function pushToCloud() {
+      await handleManualSave();
+      closeSyncModal();
+    }
+
+    async function pullFromCloud() {
+      await syncNowFromCloud(false);
+      closeSyncModal();
+    }
 
       const savedSyncKey = localStorage.getItem(STORAGE_SYNC_KEY);
       if (savedSyncKey) {

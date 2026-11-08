@@ -612,9 +612,8 @@
     const STORAGE_PERIOD_KEY = 'inventory_period_v6';
     const STORAGE_SYNC_BIN_ID = 'inventory_bin_id_v6';
 
-    // JSONBin Key công khai hỗ trợ CORS toàn cầu
-    const JSONBIN_API_KEY = "$2a$10$Q9WjX5lq9Q5N4vU2T1p8MeN7O8F4C6K0l1R3J5k7Y9Z0a1B2c3D4e";
-    let currentBinId = localStorage.getItem(STORAGE_SYNC_BIN_ID) || "672e811dad19ca34f8c672b1";
+    // Đổi sang hệ thống Cloud JsonBlob miễn phí hoàn toàn, không lỗi CORS
+    let currentBinId = localStorage.getItem(STORAGE_SYNC_BIN_ID) || "";
 
     function showToast(msg, icon = "✅") {
       const toast = document.getElementById('saveToast');
@@ -639,23 +638,48 @@
       } catch(e) {
         console.error("Lỗi lưu localStorage:", e);
       }
+    }
+
+    // Cập nhật DOM nhanh từng dòng, không vẽ lại toàn bộ bảng (Khắc phục lỗi mất phím Enter)
+    function updateRowDOM(tt) {
+      const item = inventory.find(i => i.tt === tt);
+      if (!item) return;
+
+      const qty = Number(item.sl) || 0;
+      const price = Number(item.dg) || 0;
+      const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
+
+      const qtyInput = document.querySelector(`input[data-tt="${tt}"][data-field="sl"]`);
+      if (qtyInput && document.activeElement !== qtyInput) {
+        qtyInput.value = item.sl !== null && item.sl !== undefined ? item.sl : '';
+      }
+
+      const totalCell = document.getElementById(`total-${tt}`);
+      if (totalCell) {
+        if (lineTotal !== null) {
+          totalCell.innerHTML = `<span class="text-emerald-700">${formatCurrency(lineTotal)}</span>`;
+        } else {
+          totalCell.innerHTML = `<span class="text-slate-300">-</span>`;
+        }
+      }
       updateStats();
     }
 
     // ĐỒNG BỘ: TẢI TỪ MÂY VỀ
     async function syncNowFromCloud(isAuto = false) {
+      if (!currentBinId) {
+        if (!isAuto) alert("Bạn chưa có Mã Kho Đồng Bộ. Hãy bấm 'Lưu Lên Mây' trên PC trước để tạo mã tự động!");
+        return false;
+      }
       if (!isAuto) showToast("Đang tải dữ liệu từ Cloud...", "⏳");
       try {
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${currentBinId}/latest`, {
+        const res = await fetch(`https://jsonblob.com/api/jsonBlob/${currentBinId}`, {
           method: 'GET',
-          headers: {
-            'X-Access-Key': JSONBIN_API_KEY
-          }
+          headers: { 'Accept': 'application/json' }
         });
 
         if (res.ok) {
-          const json = await res.json();
-          const cloudData = json.record;
+          const cloudData = await res.json();
           if (cloudData && Array.isArray(cloudData.data) && cloudData.data.length > 0) {
             inventory = cloudData.data;
             if (cloudData.period) {
@@ -665,18 +689,17 @@
             }
             autoSaveLocal();
             renderTable();
-            showToast("Đã đồng bộ số liệu mới nhất!", "🎉");
+            if (!isAuto) showToast("Đã đồng bộ số liệu mới nhất!", "🎉");
             const badge = document.getElementById('cloudStatusBadge');
-            if (badge) badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đã đồng bộ mây`;
+            if (badge) badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đã kết nối mây`;
             return true;
           }
+        } else {
+            if (!isAuto) alert("Mã Kho không tồn tại hoặc đã bị xóa trên máy chủ!");
         }
       } catch (err) {
         console.warn("Lỗi mạng khi tải Cloud:", err);
-      }
-
-      if (!isAuto) {
-        showToast("Dùng dữ liệu lưu offline trên máy!", "💾");
+        if (!isAuto) alert("Lỗi mạng khi kết nối Cloud.");
       }
       return false;
     }
@@ -686,30 +709,52 @@
       autoSaveLocal();
       showToast("Đang đẩy số liệu lên Cloud...", "⏳");
 
+      const payload = {
+        period: periodTitle,
+        data: inventory,
+        updatedAt: new Date().toISOString()
+      };
+
       try {
-        const payload = {
-          period: periodTitle,
-          data: inventory,
-          updatedAt: new Date().toISOString()
-        };
-
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${currentBinId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Access-Key': JSONBIN_API_KEY
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-          showToast("Đã lưu lên Cloud thành công!", "☁️");
-          return;
+        if (!currentBinId) {
+          // Tạo kho dữ liệu mới
+          const res = await fetch(`https://jsonblob.com/api/jsonBlob`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const loc = res.headers.get('Location');
+            if (loc) {
+              currentBinId = loc.split('/').pop();
+              localStorage.setItem(STORAGE_SYNC_BIN_ID, currentBinId);
+              const syncInput = document.getElementById('syncBinKeyInput');
+              if (syncInput) syncInput.value = currentBinId;
+              showToast("Đã tạo Mã Kho mới thành công!", "☁️");
+              updateStats();
+              return;
+            }
+          }
+        } else {
+          // Ghi đè cập nhật kho cũ
+          const res = await fetch(`https://jsonblob.com/api/jsonBlob/${currentBinId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            showToast("Đã cập nhật lên Cloud thành công!", "☁️");
+            return;
+          } else if (res.status === 404) {
+            currentBinId = ''; // Xóa mã cũ hỏng, tự tạo mã mới
+            handleManualSave(); 
+            return;
+          }
         }
       } catch (err) {
-        console.error("Lỗi khi PUT jsonbin:", err);
+        console.error("Lỗi mạng:", err);
+        alert("Không thể kết nối máy chủ Cloud, dữ liệu vẫn được lưu an toàn trên máy (offline)!");
       }
-
       showToast("Đã lưu vào bộ nhớ máy thành công!", "💾");
     }
 
@@ -736,9 +781,12 @@
 
         renderTable();
 
+        const syncInput = document.getElementById('syncBinKeyInput');
+        if (syncInput) syncInput.value = currentBinId;
+
         // Tự động thử kéo số liệu từ Cloud sau khi render xong
         setTimeout(() => {
-          syncNowFromCloud(true);
+          if (currentBinId) syncNowFromCloud(true);
         }, 500);
 
       } catch (err) {
@@ -836,6 +884,7 @@
         }
       };
       reader.readAsText(file);
+      e.target.value = ''; // Clear file input
     }
 
     // Phân tích biểu thức cộng dồn nháp (vd: 5+6+23)
@@ -870,7 +919,7 @@
         item.sl = '';
       }
       autoSaveLocal();
-      renderTable();
+      updateRowDOM(tt);
     }
 
     function handleNameChange(tt, newName) {
@@ -890,7 +939,7 @@
           item[field] = parseFloat(val) || 0;
         }
         autoSaveLocal();
-        renderTable();
+        updateRowDOM(tt);
       }
     }
 
@@ -976,6 +1025,7 @@
         const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
 
         const tr = document.createElement('tr');
+        tr.id = `row-${item.tt}`;
         tr.className = index % 2 === 0 ? 'bg-white hover:bg-indigo-50/50 transition-colors' : 'bg-slate-50/70 hover:bg-indigo-50/50 transition-colors';
 
         tr.innerHTML = `
@@ -990,6 +1040,7 @@
               type="text"
               value="${item.name || ''}"
               onchange="handleNameChange(${item.tt}, this.value)"
+              data-tt="${item.tt}"
               data-index="${index}"
               data-field="name"
               onkeydown="handleKeyDown(event, ${index}, 'name')"
@@ -1005,6 +1056,7 @@
               value="${item.draft || ''}"
               placeholder="vd 5+6"
               onchange="handleDraftChange(${item.tt}, this.value)"
+              data-tt="${item.tt}"
               data-index="${index}"
               data-field="draft"
               onkeydown="handleKeyDown(event, ${index}, 'draft')"
@@ -1020,6 +1072,7 @@
               value="${item.sl !== null && item.sl !== undefined ? item.sl : ''}"
               placeholder="0"
               onchange="updateField(${item.tt}, 'sl', this.value)"
+              data-tt="${item.tt}"
               data-index="${index}"
               data-field="sl"
               onkeydown="handleKeyDown(event, ${index}, 'sl')"
@@ -1044,8 +1097,8 @@
           </td>
 
           <!-- Thành Tiền -->
-          <td class="compact-cell col-total text-right font-bold text-indigo-700 border-b border-slate-100 px-2 sm:px-4 whitespace-nowrap">
-            ${lineTotal !== null ? formatCurrency(lineTotal) : '-'}
+          <td id="total-${item.tt}" class="compact-cell col-total text-right font-bold text-indigo-700 border-b border-slate-100 px-2 sm:px-4 whitespace-nowrap">
+            ${lineTotal !== null ? '<span class="text-emerald-700">' + formatCurrency(lineTotal) + '</span>' : '<span class="text-slate-300">-</span>'}
           </td>
         `;
         tbody.appendChild(tr);

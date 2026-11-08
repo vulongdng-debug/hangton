@@ -6,27 +6,45 @@
   <title>Kiểm Kê Hàng Tồn Kho</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- jsPDF & autoTable CDN cho chức năng xuất PDF tiếng Việt / bảng biểu -->
+  <!-- jsPDF & autoTable CDN cho xuất PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
   <style>
-    /* Tối ưu cỡ chữ và vùng chạm cho điện thoại người lớn tuổi */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
+
+    /* Tối ưu ô nhập liệu cảm ứng */
+    .touch-input {
+      font-size: 1.05rem;
+      min-height: 44px;
+      line-height: 1.3;
+    }
     @media (max-width: 640px) {
       .touch-input {
-        font-size: 1.15rem !important; /* Chữ to rõ dễ đọc */
-        min-height: 48px !important;    /* Phím bấm và ô chạm lớn */
-        padding: 8px 10px !important;
-      }
-      .touch-label {
-        font-size: 1.1rem !important;
+        font-size: 1.15rem !important;
+        min-height: 48px !important;
       }
     }
-    /* In ấn tối ưu */
+
+    /* Đảm bảo thanh cuộn ngang mượt mà cho bảng khi xem dạng bảng */
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ẩn spinner của input number để tiết kiệm diện tích, tránh bị che khuất số */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
     @media print {
       .no-print { display: none !important; }
       body { background: white !important; padding: 0 !important; }
@@ -34,34 +52,49 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col pb-10">
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col pb-12">
 
   <!-- Header Thanh tác vụ -->
   <header class="bg-indigo-900 text-white sticky top-0 z-30 shadow-md">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">📦 Kiểm Kê Hàng Tồn</h1>
-        <p class="text-indigo-200 text-xs sm:text-sm">Bảng kê tháng 10/2026 (Số thứ tự 1 - 250)</p>
+    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex-1 min-w-[200px]">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📦</span>
+          <h1 class="text-lg sm:text-2xl font-bold tracking-tight">Kiểm Kê Hàng Tồn</h1>
+        </div>
+        
+        <!-- YÊU CẦU 1: Cho phép sửa thông tin Tháng -->
+        <div class="flex items-center gap-2 mt-1">
+          <label for="periodInput" class="text-indigo-200 text-xs sm:text-sm whitespace-nowrap font-medium">Kỳ kiểm kê:</label>
+          <input 
+            type="text" 
+            id="periodInput" 
+            value="Tháng 10/2026"
+            onchange="updatePeriod(this.value)"
+            class="bg-indigo-950/70 text-amber-300 font-bold px-2 py-0.5 rounded border border-indigo-500/50 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-amber-400 w-36 sm:w-44"
+            title="Bấm để sửa tháng/năm kiểm kê"
+          />
+        </div>
       </div>
 
       <!-- Các nút tác vụ nhanh -->
       <div class="flex items-center gap-2 flex-wrap no-print">
-        <button id="btnExportPDF" onclick="exportToPDF()" class="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold px-3.5 py-2.5 rounded-lg shadow flex items-center gap-1.5 text-sm sm:text-base transition">
+        <button id="btnExportPDF" onclick="exportToPDF()" class="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl shadow flex items-center gap-1 text-xs sm:text-sm transition">
           📄 Xuất PDF
         </button>
-        <button id="btnExportExcel" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold px-3.5 py-2.5 rounded-lg shadow flex items-center gap-1.5 text-sm sm:text-base transition">
+        <button id="btnExportExcel" onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl shadow flex items-center gap-1 text-xs sm:text-sm transition">
           📊 Xuất Excel
         </button>
-        <button onclick="resetData()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 px-3 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition" title="Đặt lại dữ liệu gốc">
+        <button onclick="resetData()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition" title="Đặt lại dữ liệu gốc">
           🔄 Gốc
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Thanh tìm kiếm & bộ lọc -->
-  <div class="bg-white border-b border-slate-200 shadow-sm py-3 px-4 no-print sticky top-[57px] sm:top-[65px] z-20">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+  <!-- Thanh tìm kiếm & tùy chọn hiển thị -->
+  <div class="bg-white border-b border-slate-200 shadow-sm py-2.5 px-3 sm:px-4 no-print sticky top-[57px] sm:top-[68px] z-20">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
       
       <!-- Ô tìm kiếm cỡ lớn trên điện thoại -->
       <div class="relative flex-1">
@@ -70,55 +103,81 @@
           type="text"
           id="searchInput"
           placeholder="Tìm tên hàng hoặc số TT..."
-          oninput="renderTable()"
-          class="touch-input w-full pl-11 pr-4 py-2.5 text-base sm:text-lg border-2 border-slate-300 rounded-xl focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-100 bg-slate-50 transition"
+          oninput="renderView()"
+          class="touch-input w-full pl-11 pr-4 py-2 text-base sm:text-lg border-2 border-slate-300 rounded-xl focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-100 bg-slate-50 transition"
         />
       </div>
 
-      <!-- Bộ lọc nhanh -->
-      <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 text-sm sm:text-base">
-        <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-4 py-2 rounded-xl font-bold bg-indigo-600 text-white shadow-sm whitespace-nowrap">Tất cả (250)</button>
-        <button onclick="setFilter('has_stock')" id="filter-has_stock" class="filter-btn px-4 py-2 rounded-xl font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap">Đã có SL</button>
-        <button onclick="setFilter('no_stock')" id="filter-no_stock" class="filter-btn px-4 py-2 rounded-xl font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap">Chưa có SL</button>
+      <!-- Bộ lọc và Chế độ xem Mobile -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-0.5 sm:pb-0 text-sm">
+        
+        <!-- Toggle Chế độ xem: Bảng vs Danh sách Thẻ (Dành riêng giải quyết triệt để lỗi hiển thị trên điện thoại) -->
+        <div class="flex bg-slate-200 p-0.5 rounded-xl mr-1">
+          <button onclick="setViewMode('card')" id="btnViewCard" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-900 shadow-sm">
+            📱 Thẻ xem to
+          </button>
+          <button onclick="setViewMode('table')" id="btnViewTable" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600">
+            📑 Bảng đầy đủ
+          </button>
+        </div>
+
+        <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-3 py-1.5 rounded-xl font-bold bg-indigo-600 text-white shadow-sm whitespace-nowrap text-xs sm:text-sm">Tất cả (250)</button>
+        <button onclick="setFilter('has_stock')" id="filter-has_stock" class="filter-btn px-3 py-1.5 rounded-xl font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap text-xs sm:text-sm">Có SL</button>
+        <button onclick="setFilter('no_stock')" id="filter-no_stock" class="filter-btn px-3 py-1.5 rounded-xl font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap text-xs sm:text-sm">Chưa kiểm</button>
       </div>
 
     </div>
   </div>
 
-  <!-- Bảng dữ liệu chính -->
-  <main class="max-w-6xl w-full mx-auto px-2 sm:px-4 py-4 flex-1">
+  <!-- Vùng nội dung chính -->
+  <main class="max-w-6xl w-full mx-auto px-2 sm:px-4 py-3 sm:py-4 flex-1">
     
-    <!-- Hướng dẫn nhanh cho người cao tuổi -->
-    <div class="no-print mb-3 text-xs sm:text-sm text-slate-600 bg-amber-50 border border-amber-200 rounded-xl p-2.5 flex items-center gap-2">
-      <span class="text-base sm:text-lg">💡</span>
-      <span><b>Mẹo cho người lớn tuổi:</b> Bấm trực tiếp vào ô <b>Số Lượng</b> hoặc <b>Đơn Giá</b> để nhập. Dữ liệu sẽ tự động tính và lưu lại trên máy.</span>
+    <!-- Hướng dẫn cho người nhập liệu / người lớn tuổi -->
+    <div class="no-print mb-3 text-xs sm:text-sm text-slate-700 bg-amber-50 border border-amber-300 rounded-2xl p-3 shadow-sm flex items-start gap-2.5">
+      <span class="text-xl">💡</span>
+      <div class="leading-relaxed">
+        <b>Mẹo nhập nhanh:</b>
+        <ul class="list-disc ml-4 mt-0.5 space-y-0.5 text-slate-600">
+          <li><b>Cột Nháp:</b> Có thể gõ phép cộng nhiều lần kiểm (ví dụ: <code class="bg-amber-100 text-red-600 px-1 font-bold rounded">5+6+23</code>), máy sẽ <b>tự động cộng tổng vào cột Số lượng</b>.</li>
+          <li><b>Sửa Tên hàng:</b> Có thể bấm trực tiếp vào ô Tên hàng để sửa lại theo ý muốn.</li>
+          <li>Trên điện thoại, dùng chế độ <b>"📱 Thẻ xem to"</b> để chữ và số lớn nhất, không bao giờ bị cắt che.</li>
+        </ul>
+      </div>
     </div>
 
-    <!-- Bảng danh sách hàng hóa -->
-    <div class="bg-white rounded-2xl shadow border border-slate-200 overflow-hidden print-shadow-none">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse" id="inventoryTable">
+    <!-- KHUNG CHẾ ĐỘ THẺ (CARD VIEW - SIÊU THOÁNG TRÊN ĐIỆN THOẠI) -->
+    <div id="cardViewContainer" class="space-y-3">
+      <!-- Render bằng JavaScript -->
+    </div>
+
+    <!-- KHUNG CHẾ ĐỘ BẢNG (TABLE VIEW - TỐI ƯU CỘT KHÔNG BỊ TRÀN HAY MẤT SỐ) -->
+    <div id="tableViewContainer" class="hidden bg-white rounded-2xl shadow border border-slate-200 overflow-hidden print-shadow-none">
+      <div class="table-responsive w-full">
+        <!-- Đặt min-width 750px đảm bảo trên điện thoại cuộn ngang thoải mái mà không ô nào bị co dúm -->
+        <table class="min-w-[760px] w-full text-left border-collapse" id="inventoryTable">
           <thead>
-            <tr class="bg-slate-800 text-white text-sm sm:text-base font-semibold">
-              <th class="py-3 px-2 sm:px-3 text-center w-12 sm:w-16">TT</th>
-              <th class="py-3 px-3 sm:px-4 min-w-[140px] sm:min-w-[200px]">Tên Hàng</th>
-              <th class="py-3 px-2 sm:px-3 text-right w-24 sm:w-36">Số Lượng</th>
-              <th class="py-3 px-2 sm:px-3 text-right w-28 sm:w-40">Đơn Giá (đ)</th>
-              <th class="py-3 px-3 sm:px-4 text-right w-32 sm:w-44">Thành Tiền (đ)</th>
+            <tr class="bg-slate-800 text-white text-xs sm:text-sm font-semibold">
+              <th class="py-3 px-2 text-center w-12">TT</th>
+              <th class="py-3 px-3 min-w-[200px]">Tên Hàng (Bấm để sửa)</th>
+              <!-- Cột Nháp mới -->
+              <th class="py-3 px-2 text-right w-36 bg-amber-900/40">SL Nháp (vd: 5+6+23)</th>
+              <th class="py-3 px-2 text-right w-28">Số Lượng</th>
+              <th class="py-3 px-2 text-right w-32">Đơn Giá (đ)</th>
+              <th class="py-3 px-3 text-right w-36">Thành Tiền (đ)</th>
             </tr>
           </thead>
-          <tbody id="tableBody" class="divide-y divide-slate-200 font-medium">
+          <tbody id="tableBody" class="divide-y divide-slate-200 font-medium text-sm">
             <!-- Render bằng JavaScript -->
           </tbody>
         </table>
       </div>
-
-      <div id="emptyMessage" class="hidden py-12 text-center text-slate-400 text-lg">
-        Không tìm thấy mặt hàng nào phù hợp!
-      </div>
     </div>
 
-    <!-- KHU VỰC THỐNG KÊ (Được chuyển xuống dưới cùng theo yêu cầu) -->
+    <div id="emptyMessage" class="hidden py-12 text-center text-slate-400 text-lg bg-white rounded-2xl border border-slate-200 mt-2">
+      Không tìm thấy mặt hàng nào phù hợp!
+    </div>
+
+    <!-- KHU VỰC THỐNG KÊ (NẰM DƯỚI CÙNG THEO YÊU CẦU) -->
     <section class="mt-8 pt-4 border-t-2 border-slate-300">
       <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
         <span>📊</span> TỔNG HỢP VÀ THỐNG KÊ KHO
@@ -168,20 +227,28 @@
 
   <!-- Script xử lý dữ liệu và logic -->
   <script>
-    // Dữ liệu gốc 250 dòng
-    const INITIAL_DATA = [{"tt": 1, "name": "Bột Canh", "sl": "", "dg": ""}, {"tt": 2, "name": "Bột nêm Aji ngon", "sl": 1.6, "dg": 53000}, {"tt": 3, "name": "Bột nêm HN", "sl": "", "dg": ""}, {"tt": 4, "name": "Bột Ngọt", "sl": 0.57, "dg": 60000}, {"tt": 5, "name": "Dấm", "sl": "", "dg": ""}, {"tt": 6, "name": "Đường", "sl": 0.7, "dg": 22000}, {"tt": 7, "name": "Đường Hột", "sl": "", "dg": ""}, {"tt": 8, "name": "Hành", "sl": 0.8, "dg": 30000}, {"tt": 9, "name": "Muối bột", "sl": 0.6, "dg": 10000}, {"tt": 10, "name": "Muối hạt", "sl": "", "dg": ""}, {"tt": 11, "name": "Nghệ", "sl": "", "dg": ""}, {"tt": 12, "name": "Ngũ Vị Hương", "sl": 4, "dg": 2000}, {"tt": 13, "name": "Ớt Cay", "sl": 0.43, "dg": 90000}, {"tt": 14, "name": "Ớt Màu", "sl": "", "dg": ""}, {"tt": 15, "name": "Tỏi", "sl": "", "dg": ""}, {"tt": 16, "name": "Tương ớt", "sl": 4.15, "dg": 12000}, {"tt": 17, "name": "Xì dầu", "sl": "", "dg": ""}, {"tt": 18, "name": "", "sl": "", "dg": ""}, {"tt": 19, "name": "", "sl": "", "dg": ""}, {"tt": 20, "name": "", "sl": "", "dg": ""}, {"tt": 21, "name": "Bò Khô", "sl": "", "dg": ""}, {"tt": 22, "name": "Bột chiên giòn", "sl": "", "dg": ""}, {"tt": 23, "name": "Bột lọc", "sl": "", "dg": ""}, {"tt": 24, "name": "Bột Mì", "sl": "", "dg": ""}, {"tt": 25, "name": "Bơ thực vật", "sl": 0.24, "dg": 56250}, {"tt": 26, "name": "Cà rốt", "sl": "", "dg": ""}, {"tt": 27, "name": "Cơm", "sl": "", "dg": ""}, {"tt": 28, "name": "Cơm chiên", "sl": 0.35, "dg": 20000}, {"tt": 29, "name": "Chả Cá", "sl": "", "dg": ""}, {"tt": 30, "Dầu Xà Lách": 5.7, "name": "Dầu Xà Lách", "sl": 5.7, "dg": 39000}, {"tt": 31, "name": "Đậu cove", "sl": "", "dg": ""}, {"tt": 32, "name": "Đu đủ", "sl": "", "dg": ""}, {"tt": 33, "name": "Gan rim", "sl": "", "dg": ""}, {"tt": 34, "name": "Gạo", "sl": 1.53, "dg": 18000}, {"tt": 35, "name": "Mỡ nước", "sl": "", "dg": ""}, {"tt": 36, "name": "Nếp", "sl": "", "dg": ""}, {"tt": 37, "name": "Patê (chưa mì) bao", "sl": "", "dg": ""}, {"tt": 38, "name": "Patê (tính tổng)", "sl": "", "dg": ""}, {"tt": 39, "name": "Rau răm", "sl": "", "dg": ""}, {"tt": 40, "name": "Sốt Mayone", "sl": "", "dg": ""}, {"tt": 41, "name": "Sữa Bột béo", "sl": "", "dg": ""}, {"tt": 42, "name": "Tráng Dày", "sl": "", "dg": ""}, {"tt": 43, "name": "Tráng Mỏng", "sl": "", "dg": ""}, {"tt": 44, "name": "Trứng Cút", "sl": "", "dg": ""}, {"tt": 45, "name": "Trứng gà", "sl": 27, "dg": 2300}, {"tt": 46, "name": "Trứng tráng (miếng)", "sl": "", "dg": ""}, {"tt": 47, "name": "Gà", "sl": "", "dg": ""}, {"tt": 48, "name": "Gà cục", "sl": "", "dg": ""}, {"tt": 49, "name": "Heo", "sl": "", "dg": ""}, {"tt": 50, "name": "Chả mì", "sl": "", "dg": ""}, {"tt": 51, "name": "Mì Cung đình (ly)", "sl": 44, "dg": 7416.66}, {"tt": 52, "name": "Mì Cung đình Kool", "sl": "", "dg": ""}, {"tt": 53, "name": "Mì Kool (gói)", "sl": 95, "dg": 7733.33}, {"tt": 54, "name": "Mì Morden", "sl": 96, "dg": 7708.33}, {"tt": 55, "name": "Mì Nissin", "sl": 463, "dg": 6318}, {"tt": 56, "name": "Mì ổ", "sl": "", "dg": ""}, {"tt": 57, "name": "Mì tươi", "sl": 57, "dg": 5000}, {"tt": 58, "name": "Mì Vifon ly", "sl": 30, "dg": 2187.5}, {"tt": 59, "name": "Mì Vifon tương đen", "sl": 237, "dg": 6750}, {"tt": 60, "name": "Mì xúc xích (ly)", "sl": 36, "dg": 7378.37}, {"tt": 61, "name": "Mì tươi fomai", "sl": "", "dg": ""}, {"tt": 62, "name": "Mì Indomie Kokomi", "sl": 43, "dg": 4729.66}, {"tt": 63, "name": "Mì gà", "sl": "", "dg": ""}, {"tt": 64, "name": "", "sl": "", "dg": ""}, {"tt": 65, "name": "Aben", "sl": "", "dg": ""}, {"tt": 66, "name": "Aqua", "sl": 17, "dg": 3357}, {"tt": 67, "name": "BiriCo Lớn", "sl": 14.5, "dg": 15000}, {"tt": 68, "name": "BiriCo", "sl": "", "dg": ""}, {"tt": 69, "name": "Boncha", "sl": "", "dg": ""}, {"tt": 70, "name": "C2", "sl": 78, "dg": 7666.66}, {"tt": 71, "name": "Cà phê bột C2", "sl": 21, "dg": 2666.6}, {"tt": 72, "name": "Cà phê sữa", "sl": "", "dg": ""}, {"tt": 73, "name": "Ép", "sl": 430, "dg": 2600}, {"tt": 74, "name": "Ht", "sl": 283, "dg": 1416}, {"tt": 75, "name": "ICE", "sl": 16, "dg": 6666.66}, {"tt": 76, "name": "Lemona", "sl": 96, "dg": 5583}, {"tt": 77, "name": "Khoáng vivan", "sl": "", "dg": ""}, {"tt": 78, "name": "Pepsi lớn", "sl": 19, "dg": 14279.16}, {"tt": 79, "name": "Pepsi nhỏ", "sl": 179, "dg": 5303.7}, {"tt": 80, "name": "Revive", "sl": 50, "dg": 7083.33}, {"tt": 81, "name": "Rồng Ly Đỏ", "sl": 22.7, "dg": 2666.66}, {"tt": 82, "name": "Sprite lon chai", "sl": 37, "dg": 5125}, {"tt": 83, "name": "Sprite nhỏ", "sl": 55, "dg": 3753.39}, {"tt": 84, "name": "Sữa Milo hộp", "sl": 10, "dg": 6979.16}, {"tt": 85, "name": "Sữa Milo Teen", "sl": "", "dg": ""}, {"tt": 86, "name": "Trà sữa dâu", "sl": "", "dg": ""}, {"tt": 87, "name": "Trà TVT 365", "sl": 42, "dg": 6958.33}, {"tt": 88, "name": "Trà Cozy", "sl": 47, "dg": 6524.58}, {"tt": 89, "name": "Boncha thạch", "sl": "", "dg": ""}, {"tt": 90, "name": "Trà Olong nhỏ", "sl": 24, "dg": 5916.66}, {"tt": 91, "name": "Coca lớn", "sl": "", "dg": ""}, {"tt": 92, "name": "Sữa đặc", "sl": "", "dg": ""}, {"tt": 93, "name": "Trà Ô Long Đào", "sl": "", "dg": ""}, {"tt": 94, "name": "Sữa trái cây", "sl": "", "dg": ""}, {"tt": 95, "name": "Redbull Lon + Up lon", "sl": 36, "dg": 14116}, {"tt": 96, "name": "Ice socola", "sl": "", "dg": ""}, {"tt": 97, "name": "", "sl": "", "dg": ""}, {"tt": 98, "name": "", "sl": "", "dg": ""}, {"tt": 99, "name": "", "sl": "", "dg": ""}, {"tt": 100, "name": "", "sl": "", "dg": ""}, {"tt": 101, "name": "Kẹo 3 Viên", "sl": 150, "dg": 540}, {"tt": 102, "name": "Kẹo Bé lô", "sl": "", "dg": ""}, {"tt": 103, "name": "Kẹo Dynamite", "sl": 872, "dg": 228}, {"tt": 104, "name": "Kẹo Fres", "sl": 185, "dg": 260}, {"tt": 105, "name": "Kẹo Hitto", "sl": "", "dg": ""}, {"tt": 106, "name": "Kẹo Kopiko", "sl": 227, "dg": 325}, {"tt": 107, "name": "Kẹo Muối ớt", "sl": 27, "dg": 433}, {"tt": 108, "name": "Kẹo Mút chup", "sl": 18, "dg": 813}, {"tt": 109, "name": "Kẹo Oishi", "sl": 253, "dg": 178}, {"tt": 110, "name": "Kẹo Su Babol", "sl": "", "dg": ""}, {"tt": 111, "name": "Kẹo Su Bubup", "sl": 210, "dg": 667}, {"tt": 112, "name": "Kẹo Sữa Vàng", "sl": 317, "dg": 250}, {"tt": 113, "name": "Kẹo sữa xanh", "sl": "", "dg": ""}, {"tt": 114, "name": "Kẹo Thỏi lớn", "sl": 53, "dg": 3750}, {"tt": 115, "name": "Kẹo Trà sữa", "sl": "", "dg": ""}, {"tt": 116, "name": "Kẹo Trà sữa socola", "sl": "", "dg": ""}, {"tt": 117, "name": "Kẹo XO", "sl": "", "dg": ""}, {"tt": 118, "name": "Kẹo tăng lực", "sl": "", "dg": ""}, {"tt": 119, "name": "Su Mỳ", "sl": "", "dg": ""}, {"tt": 120, "name": "Kẹo 4 Viên", "sl": 49, "dg": 760}, {"tt": 121, "name": "Kẹo Bột mè", "sl": 218, "dg": 346.5}, {"tt": 122, "name": "Kẹo Sốt Hộp", "sl": 49, "dg": 3500}, {"tt": 123, "name": "", "sl": "", "dg": ""}, {"tt": 124, "name": "", "sl": "", "dg": ""}, {"tt": 125, "name": "", "sl": "", "dg": ""}, {"tt": 126, "name": "", "sl": "", "dg": ""}, {"tt": 127, "name": "", "sl": "", "dg": ""}, {"tt": 128, "name": "", "sl": "", "dg": ""}, {"tt": 129, "name": "", "sl": "", "dg": ""}, {"tt": 130, "name": "Bao dầy", "sl": 7.06, "dg": 5000}, {"tt": 131, "name": "Bao linh tinh", "sl": "", "dg": ""}, {"tt": 132, "name": "Bao tay", "sl": 6.37, "dg": 7000}, {"tt": 133, "name": "Bao tráng trộn", "sl": "", "dg": ""}, {"tt": 134, "name": "Dầu lửa", "sl": "", "dg": ""}, {"tt": 135, "name": "Đá (ký)", "sl": "", "dg": ""}, {"tt": 136, "name": "đũa (bao)", "sl": "", "dg": ""}, {"tt": 137, "name": "Hộp xốp", "sl": 354, "dg": 300}, {"tt": 138, "name": "Ly 3", "sl": "", "dg": ""}, {"tt": 139, "name": "Ly 5", "sl": 174, "dg": 240}, {"tt": 140, "name": "Nĩa", "sl": 202, "dg": 160}, {"tt": 141, "name": "Nước rửa chén", "sl": "", "dg": ""}, {"tt": 142, "name": "Ống hút lớn", "sl": "", "dg": ""}, {"tt": 143, "name": "Ống Hút nhỏ", "sl": 4.2, "dg": 5000}, {"tt": 144, "name": "Than", "sl": "", "dg": ""}, {"tt": 145, "name": "Bấc đèn", "sl": "", "dg": ""}, {"tt": 146, "name": "Muỗng nhựa", "sl": "", "dg": ""}, {"tt": 147, "name": "Trà đen", "sl": "", "dg": ""}, {"tt": 148, "name": "Thạch", "sl": "", "dg": ""}, {"tt": 149, "name": "Trân châu", "sl": "", "dg": ""}, {"tt": 150, "name": "Tương mảng", "sl": "", "dg": ""}, {"tt": 151, "name": "Bánh Cơn", "sl": "", "dg": ""}, {"tt": 152, "name": "Cá cơm", "sl": "", "dg": ""}, {"tt": 153, "name": "Cơm cháy", "sl": 17, "dg": 4200}, {"tt": 154, "name": "Chân gà rút xương", "sl": "", "dg": ""}, {"tt": 155, "name": "Chân gà rút gà", "sl": 42, "dg": 7000}, {"tt": 156, "name": "Dẻo chup chup", "sl": "", "dg": ""}, {"tt": 157, "name": "Dẻo Lợi Đạt", "sl": "", "dg": ""}, {"tt": 158, "name": "Filow", "sl": 19, "dg": 1600}, {"tt": 159, "name": "Cánh gà", "sl": "", "dg": ""}, {"tt": 160, "name": "Gân gà", "sl": 38, "dg": 1500}, {"tt": 161, "name": "Hồ lô", "sl": "", "dg": ""}, {"tt": 162, "name": "Khoai tây Potato", "sl": 112, "dg": 1500}, {"tt": 163, "name": "Me Đà Lạt", "sl": 2, "dg": 3200}, {"tt": 164, "name": "Mì Cây", "sl": 112, "dg": 1400}, {"tt": 165, "name": "Mì Ý", "sl": 27, "dg": 1400}, {"tt": 166, "name": "Mực Belto", "sl": "", "dg": ""}, {"tt": 167, "name": "Nabati", "sl": "", "dg": ""}, {"tt": 168, "name": "Nui", "sl": 2.38, "dg": 45000}, {"tt": 169, "name": "Quế Akiko", "sl": "", "dg": ""}, {"tt": 170, "name": "Rong biển", "sl": "", "dg": ""}, {"tt": 171, "name": "SN Konjac", "sl": 59, "dg": 4000}, {"tt": 172, "name": "Snack Me chỉ", "sl": 5, "dg": 3800}, {"tt": 173, "name": "Snack Orion", "sl": "", "dg": ""}, {"tt": 174, "name": "Snack milo", "sl": "", "dg": ""}, {"tt": 175, "name": "Song sinh", "sl": "", "dg": ""}, {"tt": 176, "name": "Tôm hùm", "sl": "", "dg": ""}, {"tt": 177, "name": "Thạch Suso", "sl": "", "dg": ""}, {"tt": 178, "name": "Thèo Lèo", "sl": 0.54, "dg": 50000}, {"tt": 179, "name": "Thịt ly Thỏ ty", "sl": 10, "dg": 3750}, {"tt": 180, "name": "Tráng Muối", "sl": 79, "dg": 3750}, {"tt": 181, "name": "Tráng nướng xk", "sl": 12, "dg": 3750}, {"tt": 182, "name": "Tráng trộn", "sl": "", "dg": ""}, {"tt": 183, "name": "Xúc xích bọc bột", "sl": "", "dg": ""}, {"tt": 184, "name": "Xúc xích lắc", "sl": "", "dg": ""}, {"tt": 185, "name": "Tráng Mè rot", "sl": 8, "dg": 3400}, {"tt": 186, "name": "Đùi gà bà Tuyết", "sl": "", "dg": ""}, {"tt": 187, "name": "", "sl": "", "dg": ""}, {"tt": 188, "name": "", "sl": "", "dg": ""}, {"tt": 189, "name": "Cá viên", "sl": 3.2, "dg": 54000}, {"tt": 190, "name": "Cá viên c3", "sl": 3, "dg": 1224}, {"tt": 191, "name": "Cá viên c5", "sl": 22, "dg": 1890}, {"tt": 192, "name": "Hải sản", "sl": 1, "dg": 60000}, {"tt": 193, "name": "Tôm", "sl": 2.2, "dg": 56000}, {"tt": 194, "name": "Xúc xích lớn th", "sl": 1.95, "dg": 66000}, {"tt": 195, "name": "Xúc xích nhỏ", "sl": "", "dg": ""}, {"tt": 196, "name": "Nem", "sl": "", "dg": ""}, {"tt": 197, "name": "Xúc xích lớn xan", "sl": 3.15, "dg": 64000}, {"tt": 198, "name": "", "sl": "", "dg": ""}, {"tt": 199, "name": "", "sl": "", "dg": ""}, {"tt": 200, "name": "", "sl": "", "dg": ""}, {"tt": 201, "name": "Áo Mưa", "sl": 13, "dg": 4000}, {"tt": 202, "name": "Bảng Phụ", "sl": 8, "dg": 6000}, {"tt": 203, "name": "Bao vở", "sl": "", "dg": ""}, {"tt": 204, "name": "Băng Vệ Sinh", "sl": 8, "dg": 1600}, {"tt": 205, "name": "Bóng Nhỏ", "sl": 0.9, "dg": 25000}, {"tt": 206, "name": "Bút 027", "sl": 27, "dg": 3400}, {"tt": 207, "name": "Bút Chì", "sl": 13, "dg": 2083}, {"tt": 208, "name": "Bút Lông nhỏ", "sl": 16, "dg": 5000}, {"tt": 209, "name": "Bút Nước", "sl": 18, "dg": 2250}, {"tt": 210, "name": "Cầu Đá (Đen)", "sl": 26, "dg": 6000}, {"tt": 211, "name": "Cầu Đá (Màu)", "sl": 6, "dg": 6500}, {"tt": 212, "name": "Cầu Đá (Xốp)", "sl": "", "dg": ""}, {"tt": 213, "name": "Cầu Lông", "sl": 1, "dg": 8000}, {"tt": 214, "name": "Compa Lớn", "sl": "", "dg": ""}, {"tt": 215, "name": "Compa Nhỏ", "sl": 9, "dg": 4000}, {"tt": 216, "name": "Gọt Bút", "sl": 5, "dg": 1166}, {"tt": 217, "name": "Giấy A3", "sl": 110, "dg": 760}, {"tt": 218, "name": "Giấy A4", "sl": 73, "dg": 350}, {"tt": 219, "name": "Giấy Kẻ Ngang", "sl": "", "dg": ""}, {"tt": 220, "name": "Giấy Kiểm Tra", "sl": 135, "dg": 400}, {"tt": 221, "name": "Giấy màu", "sl": "", "dg": ""}, {"tt": 222, "name": "Giấy Thủ công", "sl": "", "dg": ""}, {"tt": 223, "name": "Hồ khô", "sl": 4, "dg": 3334}, {"tt": 224, "name": "Hồ Lớn", "sl": 10, "dg": 2333}, {"tt": 225, "name": "Keo 2 Mặt", "sl": 21, "dg": 1458}, {"tt": 226, "name": "Keo 502", "sl": 1, "dg": 4000}, {"tt": 227, "name": "Keo Trong", "sl": 17, "dg": 1416}, {"tt": 228, "name": "Khăn Bảng", "sl": 15, "dg": 1800}, {"tt": 229, "name": "Khăn Giấy", "sl": "", "dg": ""}, {"tt": 230, "name": "Khăn Quàng tốt", "sl": 57, "dg": 3500}, {"tt": 231, "name": "Khăn Quàng thường", "sl": "", "dg": ""}, {"tt": 232, "name": "Khẩu trang", "sl": "", "dg": ""}, {"tt": 233, "name": "Nam châm", "sl": 8, "dg": 3500}, {"tt": 234, "name": "Nam châm nhỏ", "sl": "", "dg": ""}, {"tt": 235, "name": "Nhãn vở", "sl": "", "dg": ""}, {"tt": 236, "name": "Phấn Không Bụi Màu", "sl": 10, "dg": 3400}, {"tt": 237, "name": "Phấn Không Bụi Trắng", "sl": 16, "dg": 3200}, {"tt": 238, "name": "Tẩy", "sl": 4, "dg": 3600}, {"tt": 239, "name": "Thước 2 Tấc", "sl": 4, "dg": 2000}, {"tt": 240, "name": "Thước 3 Tấc", "sl": 3, "dg": 3000}, {"tt": 241, "name": "Thước Bộ", "sl": 5, "dg": 6500}, {"tt": 242, "name": "Thước Đo Độ nhỏ", "sl": 10, "dg": 3000}, {"tt": 243, "name": "Thước Êke", "sl": "", "dg": ""}, {"tt": 244, "name": "Thước Parabol", "sl": 4, "dg": 3000}, {"tt": 245, "name": "Vở Abc", "sl": 10, "dg": 6000}, {"tt": 246, "name": "Vở Hành Tinh Xanh", "sl": 4, "dg": 4500}, {"tt": 247, "name": "Vở Vui Học", "sl": 11, "dg": 3300}, {"tt": 248, "name": "Xốp lau bảng", "sl": "", "dg": ""}, {"tt": 249, "name": "Bì thư", "sl": "", "dg": ""}, {"tt": 250, "name": "Êke thường", "sl": 5, "dg": 4500}];
+    const INITIAL_DATA = [{"tt": 1, "name": "Bột Canh", "sl": "", "dg": "", "draft": ""}, {"tt": 2, "name": "Bột nêm Aji ngon", "sl": 1.6, "dg": 53000, "draft": ""}, {"tt": 3, "name": "Bột nêm HN", "sl": "", "dg": "", "draft": ""}, {"tt": 4, "name": "Bột Ngọt", "sl": 0.57, "dg": 60000, "draft": ""}, {"tt": 5, "name": "Dấm", "sl": "", "dg": "", "draft": ""}, {"tt": 6, "name": "Đường", "sl": 0.7, "dg": 22000, "draft": ""}, {"tt": 7, "name": "Đường Hột", "sl": "", "dg": "", "draft": ""}, {"tt": 8, "name": "Hành", "sl": 0.8, "dg": 30000, "draft": ""}, {"tt": 9, "name": "Muối bột", "sl": 0.6, "dg": 10000, "draft": ""}, {"tt": 10, "name": "Muối hạt", "sl": "", "dg": "", "draft": ""}, {"tt": 11, "name": "Nghệ", "sl": "", "dg": "", "draft": ""}, {"tt": 12, "name": "Ngũ Vị Hương", "sl": 4, "dg": 2000, "draft": ""}, {"tt": 13, "name": "Ớt Cay", "sl": 0.43, "dg": 90000, "draft": ""}, {"tt": 14, "name": "Ớt Màu", "sl": "", "dg": "", "draft": ""}, {"tt": 15, "name": "Tỏi", "sl": "", "dg": "", "draft": ""}, {"tt": 16, "name": "Tương ớt", "sl": 4.15, "dg": 12000, "draft": ""}, {"tt": 17, "name": "Xì dầu", "sl": "", "dg": "", "draft": ""}, {"tt": 18, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 19, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 20, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 21, "name": "Bò Khô", "sl": "", "dg": "", "draft": ""}, {"tt": 22, "name": "Bột chiên giòn", "sl": "", "dg": "", "draft": ""}, {"tt": 23, "name": "Bột lọc", "sl": "", "dg": "", "draft": ""}, {"tt": 24, "name": "Bột Mì", "sl": "", "dg": "", "draft": ""}, {"tt": 25, "name": "Bơ thực vật", "sl": 0.24, "dg": 56250, "draft": ""}, {"tt": 26, "name": "Cà rốt", "sl": "", "dg": "", "draft": ""}, {"tt": 27, "name": "Cơm", "sl": "", "dg": "", "draft": ""}, {"tt": 28, "name": "Cơm chiên", "sl": 0.35, "dg": 20000, "draft": ""}, {"tt": 29, "name": "Chả Cá", "sl": "", "dg": "", "draft": ""}, {"tt": 30, "Dầu Xà Lách": 5.7, "name": "Dầu Xà Lách", "sl": 5.7, "dg": 39000, "draft": ""}, {"tt": 31, "name": "Đậu cove", "sl": "", "dg": "", "draft": ""}, {"tt": 32, "name": "Đu đủ", "sl": "", "dg": "", "draft": ""}, {"tt": 33, "name": "Gan rim", "sl": "", "dg": "", "draft": ""}, {"tt": 34, "name": "Gạo", "sl": 1.53, "dg": 18000, "draft": ""}, {"tt": 35, "name": "Mỡ nước", "sl": "", "dg": "", "draft": ""}, {"tt": 36, "name": "Nếp", "sl": "", "dg": "", "draft": ""}, {"tt": 37, "name": "Patê (chưa mì) bao", "sl": "", "dg": "", "draft": ""}, {"tt": 38, "name": "Patê (tính tổng)", "sl": "", "dg": "", "draft": ""}, {"tt": 39, "name": "Rau răm", "sl": "", "dg": "", "draft": ""}, {"tt": 40, "name": "Sốt Mayone", "sl": "", "dg": "", "draft": ""}, {"tt": 41, "name": "Sữa Bột béo", "sl": "", "dg": "", "draft": ""}, {"tt": 42, "name": "Tráng Dày", "sl": "", "dg": "", "draft": ""}, {"tt": 43, "name": "Tráng Mỏng", "sl": "", "dg": "", "draft": ""}, {"tt": 44, "name": "Trứng Cút", "sl": "", "dg": "", "draft": ""}, {"tt": 45, "name": "Trứng gà", "sl": 27, "dg": 2300, "draft": ""}, {"tt": 46, "name": "Trứng tráng (miếng)", "sl": "", "dg": "", "draft": ""}, {"tt": 47, "name": "Gà", "sl": "", "dg": "", "draft": ""}, {"tt": 48, "name": "Gà cục", "sl": "", "dg": "", "draft": ""}, {"tt": 49, "name": "Heo", "sl": "", "dg": "", "draft": ""}, {"tt": 50, "name": "Chả mì", "sl": "", "dg": "", "draft": ""}, {"tt": 51, "name": "Mì Cung đình (ly)", "sl": 44, "dg": 7416.66, "draft": ""}, {"tt": 52, "name": "Mì Cung đình Kool", "sl": "", "dg": "", "draft": ""}, {"tt": 53, "name": "Mì Kool (gói)", "sl": 95, "dg": 7733.33, "draft": ""}, {"tt": 54, "name": "Mì Morden", "sl": 96, "dg": 7708.33, "draft": ""}, {"tt": 55, "name": "Mì Nissin", "sl": 463, "dg": 6318, "draft": ""}, {"tt": 56, "name": "Mì ổ", "sl": "", "dg": "", "draft": ""}, {"tt": 57, "name": "Mì tươi", "sl": 57, "dg": 5000, "draft": ""}, {"tt": 58, "name": "Mì Vifon ly", "sl": 30, "dg": 2187.5, "draft": ""}, {"tt": 59, "name": "Mì Vifon tương đen", "sl": 237, "dg": 6750, "draft": ""}, {"tt": 60, "name": "Mì xúc xích (ly)", "sl": 36, "dg": 7378.37, "draft": ""}, {"tt": 61, "name": "Mì tươi fomai", "sl": "", "dg": "", "draft": ""}, {"tt": 62, "name": "Mì Indomie Kokomi", "sl": 43, "dg": 4729.66, "draft": ""}, {"tt": 63, "name": "Mì gà", "sl": "", "dg": "", "draft": ""}, {"tt": 64, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 65, "name": "Aben", "sl": "", "dg": "", "draft": ""}, {"tt": 66, "name": "Aqua", "sl": 17, "dg": 3357, "draft": ""}, {"tt": 67, "name": "BiriCo Lớn", "sl": 14.5, "dg": 15000, "draft": ""}, {"tt": 68, "name": "BiriCo", "sl": "", "dg": "", "draft": ""}, {"tt": 69, "name": "Boncha", "sl": "", "dg": "", "draft": ""}, {"tt": 70, "name": "C2", "sl": 78, "dg": 7666.66, "draft": ""}, {"tt": 71, "name": "Cà phê bột C2", "sl": 21, "dg": 2666.6, "draft": ""}, {"tt": 72, "name": "Cà phê sữa", "sl": "", "dg": "", "draft": ""}, {"tt": 73, "name": "Ép", "sl": 430, "dg": 2600, "draft": ""}, {"tt": 74, "name": "Ht", "sl": 283, "dg": 1416, "draft": ""}, {"tt": 75, "name": "ICE", "sl": 16, "dg": 6666.66, "draft": ""}, {"tt": 76, "name": "Lemona", "sl": 96, "dg": 5583, "draft": ""}, {"tt": 77, "name": "Khoáng vivan", "sl": "", "dg": "", "draft": ""}, {"tt": 78, "name": "Pepsi lớn", "sl": 19, "dg": 14279.16, "draft": ""}, {"tt": 79, "name": "Pepsi nhỏ", "sl": 179, "dg": 5303.7, "draft": ""}, {"tt": 80, "name": "Revive", "sl": 50, "dg": 7083.33, "draft": ""}, {"tt": 81, "name": "Rồng Ly Đỏ", "sl": 22.7, "dg": 2666.66, "draft": ""}, {"tt": 82, "name": "Sprite lon chai", "sl": 37, "dg": 5125, "draft": ""}, {"tt": 83, "name": "Sprite nhỏ", "sl": 55, "dg": 3753.39, "draft": ""}, {"tt": 84, "name": "Sữa Milo hộp", "sl": 10, "dg": 6979.16, "draft": ""}, {"tt": 85, "name": "Sữa Milo Teen", "sl": "", "dg": "", "draft": ""}, {"tt": 86, "name": "Trà sữa dâu", "sl": "", "dg": "", "draft": ""}, {"tt": 87, "name": "Trà TVT 365", "sl": 42, "dg": 6958.33, "draft": ""}, {"tt": 88, "name": "Trà Cozy", "sl": 47, "dg": 6524.58, "draft": ""}, {"tt": 89, "name": "Boncha thạch", "sl": "", "dg": "", "draft": ""}, {"tt": 90, "name": "Trà Olong nhỏ", "sl": 24, "dg": 5916.66, "draft": ""}, {"tt": 91, "name": "Coca lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 92, "name": "Sữa đặc", "sl": "", "dg": "", "draft": ""}, {"tt": 93, "name": "Trà Ô Long Đào", "sl": "", "dg": "", "draft": ""}, {"tt": 94, "name": "Sữa trái cây", "sl": "", "dg": "", "draft": ""}, {"tt": 95, "name": "Redbull Lon + Up lon", "sl": 36, "dg": 14116, "draft": ""}, {"tt": 96, "name": "Ice socola", "sl": "", "dg": "", "draft": ""}, {"tt": 97, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 98, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 99, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 100, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 101, "name": "Kẹo 3 Viên", "sl": 150, "dg": 540, "draft": ""}, {"tt": 102, "name": "Kẹo Bé lô", "sl": "", "dg": "", "draft": ""}, {"tt": 103, "name": "Kẹo Dynamite", "sl": 872, "dg": 228, "draft": ""}, {"tt": 104, "name": "Kẹo Fres", "sl": 185, "dg": 260, "draft": ""}, {"tt": 105, "name": "Kẹo Hitto", "sl": "", "dg": "", "draft": ""}, {"tt": 106, "name": "Kẹo Kopiko", "sl": 227, "dg": 325, "draft": ""}, {"tt": 107, "name": "Kẹo Muối ớt", "sl": 27, "dg": 433, "draft": ""}, {"tt": 108, "name": "Kẹo Mút chup", "sl": 18, "dg": 813, "draft": ""}, {"tt": 109, "name": "Kẹo Oishi", "sl": 253, "dg": 178, "draft": ""}, {"tt": 110, "name": "Kẹo Su Babol", "sl": "", "dg": "", "draft": ""}, {"tt": 111, "name": "Kẹo Su Bubup", "sl": 210, "dg": 667, "draft": ""}, {"tt": 112, "name": "Kẹo Sữa Vàng", "sl": 317, "dg": 250, "draft": ""}, {"tt": 113, "name": "Kẹo sữa xanh", "sl": "", "dg": "", "draft": ""}, {"tt": 114, "name": "Kẹo Thỏi lớn", "sl": 53, "dg": 3750, "draft": ""}, {"tt": 115, "name": "Kẹo Trà sữa", "sl": "", "dg": "", "draft": ""}, {"tt": 116, "name": "Kẹo Trà sữa socola", "sl": "", "dg": "", "draft": ""}, {"tt": 117, "name": "Kẹo XO", "sl": "", "dg": "", "draft": ""}, {"tt": 118, "name": "Kẹo tăng lực", "sl": "", "dg": "", "draft": ""}, {"tt": 119, "name": "Su Mỳ", "sl": "", "dg": "", "draft": ""}, {"tt": 120, "name": "Kẹo 4 Viên", "sl": 49, "dg": 760, "draft": ""}, {"tt": 121, "name": "Kẹo Bột mè", "sl": 218, "dg": 346.5, "draft": ""}, {"tt": 122, "name": "Kẹo Sốt Hộp", "sl": 49, "dg": 3500, "draft": ""}, {"tt": 123, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 124, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 125, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 126, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 127, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 128, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 129, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 130, "name": "Bao dầy", "sl": 7.06, "dg": 5000, "draft": ""}, {"tt": 131, "name": "Bao linh tinh", "sl": "", "dg": "", "draft": ""}, {"tt": 132, "name": "Bao tay", "sl": 6.37, "dg": 7000, "draft": ""}, {"tt": 133, "name": "Bao tráng trộn", "sl": "", "dg": "", "draft": ""}, {"tt": 134, "name": "Dầu lửa", "sl": "", "dg": "", "draft": ""}, {"tt": 135, "name": "Đá (ký)", "sl": "", "dg": "", "draft": ""}, {"tt": 136, "name": "đũa (bao)", "sl": "", "dg": "", "draft": ""}, {"tt": 137, "name": "Hộp xốp", "sl": 354, "dg": 300, "draft": ""}, {"tt": 138, "name": "Ly 3", "sl": "", "dg": "", "draft": ""}, {"tt": 139, "name": "Ly 5", "sl": 174, "dg": 240, "draft": ""}, {"tt": 140, "name": "Nĩa", "sl": 202, "dg": 160, "draft": ""}, {"tt": 141, "name": "Nước rửa chén", "sl": "", "dg": "", "draft": ""}, {"tt": 142, "name": "Ống hút lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 143, "name": "Ống Hút nhỏ", "sl": 4.2, "dg": 5000, "draft": ""}, {"tt": 144, "name": "Than", "sl": "", "dg": "", "draft": ""}, {"tt": 145, "name": "Bấc đèn", "sl": "", "dg": "", "draft": ""}, {"tt": 146, "name": "Muỗng nhựa", "sl": "", "dg": "", "draft": ""}, {"tt": 147, "name": "Trà đen", "sl": "", "dg": "", "draft": ""}, {"tt": 148, "name": "Thạch", "sl": "", "dg": "", "draft": ""}, {"tt": 149, "name": "Trân châu", "sl": "", "dg": "", "draft": ""}, {"tt": 150, "name": "Tương mảng", "sl": "", "dg": "", "draft": ""}, {"tt": 151, "name": "Bánh Cơn", "sl": "", "dg": "", "draft": ""}, {"tt": 152, "name": "Cá cơm", "sl": "", "dg": "", "draft": ""}, {"tt": 153, "name": "Cơm cháy", "sl": 17, "dg": 4200, "draft": ""}, {"tt": 154, "name": "Chân gà rút xương", "sl": "", "dg": "", "draft": ""}, {"tt": 155, "name": "Chân gà rút gà", "sl": 42, "dg": 7000, "draft": ""}, {"tt": 156, "name": "Dẻo chup chup", "sl": "", "dg": "", "draft": ""}, {"tt": 157, "name": "Dẻo Lợi Đạt", "sl": "", "dg": "", "draft": ""}, {"tt": 158, "name": "Filow", "sl": 19, "dg": 1600, "draft": ""}, {"tt": 159, "name": "Cánh gà", "sl": "", "dg": "", "draft": ""}, {"tt": 160, "name": "Gân gà", "sl": 38, "dg": 1500, "draft": ""}, {"tt": 161, "name": "Hồ lô", "sl": "", "dg": "", "draft": ""}, {"tt": 162, "name": "Khoai tây Potato", "sl": 112, "dg": 1500, "draft": ""}, {"tt": 163, "name": "Me Đà Lạt", "sl": 2, "dg": 3200, "draft": ""}, {"tt": 164, "name": "Mì Cây", "sl": 112, "dg": 1400, "draft": ""}, {"tt": 165, "name": "Mì Ý", "sl": 27, "dg": 1400, "draft": ""}, {"tt": 166, "name": "Mực Belto", "sl": "", "dg": "", "draft": ""}, {"tt": 167, "name": "Nabati", "sl": "", "dg": "", "draft": ""}, {"tt": 168, "name": "Nui", "sl": 2.38, "dg": 45000, "draft": ""}, {"tt": 169, "name": "Quế Akiko", "sl": "", "dg": "", "draft": ""}, {"tt": 170, "name": "Rong biển", "sl": "", "dg": "", "draft": ""}, {"tt": 171, "name": "SN Konjac", "sl": 59, "dg": 4000, "draft": ""}, {"tt": 172, "name": "Snack Me chỉ", "sl": 5, "dg": 3800, "draft": ""}, {"tt": 173, "name": "Snack Orion", "sl": "", "dg": "", "draft": ""}, {"tt": 174, "name": "Snack milo", "sl": "", "dg": "", "draft": ""}, {"tt": 175, "name": "Song sinh", "sl": "", "dg": "", "draft": ""}, {"tt": 176, "name": "Tôm hùm", "sl": "", "dg": "", "draft": ""}, {"tt": 177, "name": "Thạch Suso", "sl": "", "dg": "", "draft": ""}, {"tt": 178, "name": "Thèo Lèo", "sl": 0.54, "dg": 50000, "draft": ""}, {"tt": 179, "name": "Thịt ly Thỏ ty", "sl": 10, "dg": 3750, "draft": ""}, {"tt": 180, "name": "Tráng Muối", "sl": 79, "dg": 3750, "draft": ""}, {"tt": 181, "name": "Tráng nướng xk", "sl": 12, "dg": 3750, "draft": ""}, {"tt": 182, "name": "Tráng trộn", "sl": "", "dg": "", "draft": ""}, {"tt": 183, "name": "Xúc xích bọc bột", "sl": "", "dg": "", "draft": ""}, {"tt": 184, "name": "Xúc xích lắc", "sl": "", "dg": "", "draft": ""}, {"tt": 185, "name": "Tráng Mè rot", "sl": 8, "dg": 3400, "draft": ""}, {"tt": 186, "name": "Đùi gà bà Tuyết", "sl": "", "dg": "", "draft": ""}, {"tt": 187, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 188, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 189, "name": "Cá viên", "sl": 3.2, "dg": 54000, "draft": ""}, {"tt": 190, "name": "Cá viên c3", "sl": 3, "dg": 1224, "draft": ""}, {"tt": 191, "name": "Cá viên c5", "sl": 22, "dg": 1890, "draft": ""}, {"tt": 192, "name": "Hải sản", "sl": 1, "dg": 60000, "draft": ""}, {"tt": 193, "name": "Tôm", "sl": 2.2, "dg": 56000, "draft": ""}, {"tt": 194, "name": "Xúc xích lớn th", "sl": 1.95, "dg": 66000, "draft": ""}, {"tt": 195, "name": "Xúc xích nhỏ", "sl": "", "dg": "", "draft": ""}, {"tt": 196, "name": "Nem", "sl": "", "dg": "", "draft": ""}, {"tt": 197, "name": "Xúc xích lớn xan", "sl": 3.15, "dg": 64000, "draft": ""}, {"tt": 198, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 199, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 200, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 201, "name": "Áo Mưa", "sl": 13, "dg": 4000, "draft": ""}, {"tt": 202, "name": "Bảng Phụ", "sl": 8, "dg": 6000, "draft": ""}, {"tt": 203, "name": "Bao vở", "sl": "", "dg": "", "draft": ""}, {"tt": 204, "name": "Băng Vệ Sinh", "sl": 8, "dg": 1600, "draft": ""}, {"tt": 205, "name": "Bóng Nhỏ", "sl": 0.9, "dg": 25000, "draft": ""}, {"tt": 206, "name": "Bút 027", "sl": 27, "dg": 3400, "draft": ""}, {"tt": 207, "name": "Bút Chì", "sl": 13, "dg": 2083, "draft": ""}, {"tt": 208, "name": "Bút Lông nhỏ", "sl": 16, "dg": 5000, "draft": ""}, {"tt": 209, "name": "Bút Nước", "sl": 18, "dg": 2250, "draft": ""}, {"tt": 210, "name": "Cầu Đá (Đen)", "sl": 26, "dg": 6000, "draft": ""}, {"tt": 211, "name": "Cầu Đá (Màu)", "sl": 6, "dg": 6500, "draft": ""}, {"tt": 212, "name": "Cầu Đá (Xốp)", "sl": "", "dg": "", "draft": ""}, {"tt": 213, "name": "Cầu Lông", "sl": 1, "dg": 8000, "draft": ""}, {"tt": 214, "name": "Compa Lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 215, "name": "Compa Nhỏ", "sl": 9, "dg": 4000, "draft": ""}, {"tt": 216, "name": "Gọt Bút", "sl": 5, "dg": 1166, "draft": ""}, {"tt": 217, "name": "Giấy A3", "sl": 110, "dg": 760, "draft": ""}, {"tt": 218, "name": "Giấy A4", "sl": 73, "dg": 350, "draft": ""}, {"tt": 219, "name": "Giấy Kẻ Ngang", "sl": "", "dg": "", "draft": ""}, {"tt": 220, "name": "Giấy Kiểm Tra", "sl": 135, "dg": 400, "draft": ""}, {"tt": 221, "name": "Giấy màu", "sl": "", "dg": "", "draft": ""}, {"tt": 222, "name": "Giấy Thủ công", "sl": "", "dg": "", "draft": ""}, {"tt": 223, "name": "Hồ khô", "sl": 4, "dg": 3334, "draft": ""}, {"tt": 224, "name": "Hồ Lớn", "sl": 10, "dg": 2333, "draft": ""}, {"tt": 225, "name": "Keo 2 Mặt", "sl": 21, "dg": 1458, "draft": ""}, {"tt": 226, "name": "Keo 502", "sl": 1, "dg": 4000, "draft": ""}, {"tt": 227, "name": "Keo Trong", "sl": 17, "dg": 1416, "draft": ""}, {"tt": 228, "name": "Khăn Bảng", "sl": 15, "dg": 1800, "draft": ""}, {"tt": 229, "name": "Khăn Giấy", "sl": "", "dg": "", "draft": ""}, {"tt": 230, "name": "Khăn Quàng tốt", "sl": 57, "dg": 3500, "draft": ""}, {"tt": 231, "name": "Khăn Quàng thường", "sl": "", "dg": "", "draft": ""}, {"tt": 232, "name": "Khẩu trang", "sl": "", "dg": "", "draft": ""}, {"tt": 233, "name": "Nam châm", "sl": 8, "dg": 3500, "draft": ""}, {"tt": 234, "name": "Nam châm nhỏ", "sl": "", "dg": "", "draft": ""}, {"tt": 235, "name": "Nhãn vở", "sl": "", "dg": "", "draft": ""}, {"tt": 236, "name": "Phấn Không Bụi Màu", "sl": 10, "dg": 3400, "draft": ""}, {"tt": 237, "name": "Phấn Không Bụi Trắng", "sl": 16, "dg": 3200, "draft": ""}, {"tt": 238, "name": "Tẩy", "sl": 4, "dg": 3600, "draft": ""}, {"tt": 239, "name": "Thước 2 Tấc", "sl": 4, "dg": 2000, "draft": ""}, {"tt": 240, "name": "Thước 3 Tấc", "sl": 3, "dg": 3000, "draft": ""}, {"tt": 241, "name": "Thước Bộ", "sl": 5, "dg": 6500, "draft": ""}, {"tt": 242, "name": "Thước Đo Độ nhỏ", "sl": 10, "dg": 3000, "draft": ""}, {"tt": 243, "name": "Thước Êke", "sl": "", "dg": "", "draft": ""}, {"tt": 244, "name": "Thước Parabol", "sl": 4, "dg": 3000, "draft": ""}, {"tt": 245, "name": "Vở Abc", "sl": 10, "dg": 6000, "draft": ""}, {"tt": 246, "name": "Vở Hành Tinh Xanh", "sl": 4, "dg": 4500, "draft": ""}, {"tt": 247, "name": "Vở Vui Học", "sl": 11, "dg": 3300, "draft": ""}, {"tt": 248, "name": "Xốp lau bảng", "sl": "", "dg": "", "draft": ""}, {"tt": 249, "name": "Bì thư", "sl": "", "dg": "", "draft": ""}, {"tt": 250, "name": "Êke thường", "sl": 5, "dg": 4500, "draft": ""}];
 
-    // Khởi tạo State
     let inventory = [];
-    const STORAGE_KEY = 'inventory_stock_data_v1';
+    let periodTitle = "Tháng 10/2026";
+    let viewMode = window.innerWidth <= 640 ? 'card' : 'table'; // Mặc định mobile vào Card view to rõ
     let currentFilter = 'all';
 
-    // Đọc từ LocalStorage nếu có
+    const STORAGE_DATA_KEY = 'inventory_stock_data_v2';
+    const STORAGE_PERIOD_KEY = 'inventory_period_v2';
+
+    // Đọc dữ liệu
     function loadData() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      const savedPeriod = localStorage.getItem(STORAGE_PERIOD_KEY);
+      if (savedPeriod) {
+        periodTitle = savedPeriod;
+        document.getElementById('periodInput').value = periodTitle;
+      }
+
+      const savedData = localStorage.getItem(STORAGE_DATA_KEY);
+      if (savedData) {
         try {
-          inventory = JSON.parse(saved);
+          inventory = JSON.parse(savedData);
         } catch(e) {
           inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
         }
@@ -191,19 +258,110 @@
     }
 
     function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
+      localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
       updateStats();
+    }
+
+    function updatePeriod(val) {
+      periodTitle = val.trim() || "Tháng 10/2026";
+      saveData();
     }
 
     function resetData() {
       if (confirm('Bạn có chắc muốn đặt lại toàn bộ dữ liệu ban đầu theo sổ tay không?')) {
         inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
+        periodTitle = "Tháng 10/2026";
+        document.getElementById('periodInput').value = periodTitle;
         saveData();
-        renderTable();
+        renderView();
       }
     }
 
-    // Format tiền tệ & số
+    // Chuyển đổi giữa chế độ Card to rõ và Bảng đầy đủ
+    function setViewMode(mode) {
+      viewMode = mode;
+      const btnCard = document.getElementById('btnViewCard');
+      const btnTable = document.getElementById('btnViewTable');
+      const cardContainer = document.getElementById('cardViewContainer');
+      const tableContainer = document.getElementById('tableViewContainer');
+
+      if (mode === 'card') {
+        btnCard.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-900 shadow-sm';
+        btnTable.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600';
+        cardContainer.classList.remove('hidden');
+        tableContainer.classList.add('hidden');
+      } else {
+        btnTable.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-900 shadow-sm';
+        btnCard.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600';
+        tableContainer.classList.remove('hidden');
+        cardContainer.classList.add('hidden');
+      }
+      renderView();
+    }
+
+    // TÍNH TỔNG CỘT NHÁP (Hỗ trợ biểu thức như 5+6+23, 10 + 2.5, hoặc số đơn)
+    function evalDraftExpression(expr) {
+      if (!expr || typeof expr !== 'string') return null;
+      const cleaned = expr.replace(/,/g, '.').trim();
+      if (!cleaned) return null;
+
+      // Tách chuỗi theo dấu + hoặc khoảng trắng
+      const parts = cleaned.split('+');
+      let sum = 0;
+      let valid = false;
+
+      for (let p of parts) {
+        const val = parseFloat(p.trim());
+        if (!isNaN(val)) {
+          sum += val;
+          valid = true;
+        }
+      }
+      return valid ? Math.round(sum * 100) / 100 : null;
+    }
+
+    // Cập nhật khi sửa cột Nháp
+    function handleDraftChange(tt, draftVal) {
+      const item = inventory.find(i => i.tt === tt);
+      if (!item) return;
+
+      item.draft = draftVal;
+      const calculatedSum = evalDraftExpression(draftVal);
+      if (calculatedSum !== null) {
+        item.sl = calculatedSum;
+      } else if (draftVal.trim() === '') {
+        // Nếu xóa nháp, để trống SL nếu muốn hoặc giữ nguyên
+        // Nếu người dùng xóa hẳn nháp thì để trống SL
+        item.sl = '';
+      }
+      saveData();
+      renderView();
+    }
+
+    // Cập nhật khi sửa trực tiếp Tên hàng
+    function handleNameChange(tt, newName) {
+      const item = inventory.find(i => i.tt === tt);
+      if (item) {
+        item.name = newName;
+        saveData();
+      }
+    }
+
+    // Cập nhật ô SL hoặc Đơn giá
+    function updateField(tt, field, val) {
+      const item = inventory.find(i => i.tt === tt);
+      if (item) {
+        if (val === '' || val === null) {
+          item[field] = '';
+        } else {
+          item[field] = parseFloat(val) || 0;
+        }
+        saveData();
+        renderView();
+      }
+    }
+
     function formatNumber(num) {
       if (num === null || num === undefined || num === '') return '-';
       const n = Number(num);
@@ -216,79 +374,186 @@
       return Math.round(Number(num)).toLocaleString('vi-VN') + ' ₫';
     }
 
-    // Lọc dữ liệu
     function setFilter(type) {
       currentFilter = type;
       document.querySelectorAll('.filter-btn').forEach(b => {
-        b.className = 'filter-btn px-4 py-2 rounded-xl font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
+        b.className = 'filter-btn px-3 py-1.5 rounded-xl font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap text-xs sm:text-sm';
       });
       const activeBtn = document.getElementById('filter-' + type);
       if (activeBtn) {
-        activeBtn.className = 'filter-btn px-4 py-2 rounded-xl font-bold bg-indigo-600 text-white shadow-sm whitespace-nowrap';
+        activeBtn.className = 'filter-btn px-3 py-1.5 rounded-xl font-bold bg-indigo-600 text-white shadow-sm whitespace-nowrap text-xs sm:text-sm';
       }
-      renderTable();
+      renderView();
     }
 
-    // Render bảng hàng
-    function renderTable() {
-      const tbody = document.getElementById('tableBody');
+    // RENDER GIAO DIỆN CHÍNH
+    function renderView() {
       const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
-      tbody.innerHTML = '';
-
       let visibleCount = 0;
 
-      inventory.forEach((item, index) => {
-        // Kiểm tra tìm kiếm
-        const matchesSearch = item.name.toLowerCase().includes(search) || String(item.tt).includes(search);
-        if (!matchesSearch) return;
+      const filteredItems = inventory.filter((item, index) => {
+        const matchesSearch = (item.name || '').toLowerCase().includes(search) || String(item.tt).includes(search);
+        if (!matchesSearch) return false;
 
-        // Kiểm tra filter
         const hasStock = item.sl !== '' && item.sl !== null && Number(item.sl) > 0;
-        if (currentFilter === 'has_stock' && !hasStock) return;
-        if (currentFilter === 'no_stock' && hasStock) return;
+        if (currentFilter === 'has_stock' && !hasStock) return false;
+        if (currentFilter === 'no_stock' && hasStock) return false;
 
-        visibleCount++;
+        return true;
+      });
 
-        // Tính thành tiền từng dòng
+      visibleCount = filteredItems.length;
+
+      // 1. RENDER CHẾ ĐỘ THẺ (CARD VIEW - PHÙ HỢP NHẤT CHO ĐIỆN THOẠI & NGƯỜI LỚN TUỔI)
+      const cardContainer = document.getElementById('cardViewContainer');
+      cardContainer.innerHTML = '';
+
+      filteredItems.forEach(item => {
         const qty = Number(item.sl) || 0;
         const price = Number(item.dg) || 0;
         const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
 
-        const row = document.createElement('tr');
-        row.className = index % 2 === 0 ? 'bg-white hover:bg-indigo-50/40 transition' : 'bg-slate-50/80 hover:bg-indigo-50/40 transition';
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 transition hover:shadow-md";
 
-        row.innerHTML = `
-          <td class="py-3 px-2 sm:px-3 text-center text-slate-500 font-bold text-sm sm:text-base border-b border-slate-200">
+        card.innerHTML = `
+          <!-- Dòng đầu: STT & Tên Hàng sửa trực tiếp cỡ to rõ -->
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center bg-indigo-100 text-indigo-900 font-extrabold text-base w-9 h-9 rounded-xl flex-shrink-0">
+              #${item.tt}
+            </span>
+            <input 
+              type="text"
+              value="${item.name || ''}"
+              placeholder="Nhập tên mặt hàng..."
+              onchange="handleNameChange(${item.tt}, this.value)"
+              class="touch-input flex-1 font-bold text-lg sm:text-xl text-slate-800 bg-slate-50 border-2 border-slate-200 rounded-xl px-3 py-1.5 focus:border-indigo-600 focus:bg-white focus:outline-none transition"
+              title="Bấm để sửa tên hàng"
+            />
+          </div>
+
+          <!-- Dòng 2: Cột Nháp và Cột Số Lượng -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <!-- Nhập nháp cộng dồn -->
+            <div class="bg-amber-50/70 p-2 rounded-xl border border-amber-200">
+              <label class="block text-xs font-bold text-amber-900 mb-1">
+                📝 SL Nháp (vd: 5+6+23)
+              </label>
+              <input 
+                type="text" 
+                value="${item.draft || ''}"
+                placeholder="Nhập vd: 2+5"
+                onchange="handleDraftChange(${item.tt}, this.value)"
+                class="touch-input w-full font-bold text-base text-amber-900 bg-white border border-amber-300 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+
+            <!-- Số lượng tổng (Tự nhảy hoặc nhập trực tiếp) -->
+            <div class="bg-indigo-50/70 p-2 rounded-xl border border-indigo-200">
+              <label class="block text-xs font-bold text-indigo-950 mb-1">
+                📦 Tổng Số Lượng
+              </label>
+              <input 
+                type="number" 
+                step="any"
+                value="${item.sl !== null && item.sl !== undefined ? item.sl : ''}"
+                placeholder="0"
+                onchange="updateField(${item.tt}, 'sl', this.value)"
+                class="touch-input w-full text-right font-extrabold text-lg text-indigo-900 bg-white border border-indigo-300 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+          </div>
+
+          <!-- Dòng 3: Đơn Giá & Thành Tiền lớn rõ ràng -->
+          <div class="grid grid-cols-2 gap-2.5 items-center pt-1 border-t border-slate-100">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Đơn Giá (đ)</label>
+              <input 
+                type="number" 
+                step="any"
+                value="${item.dg !== null && item.dg !== undefined ? item.dg : ''}"
+                placeholder="0"
+                onchange="updateField(${item.tt}, 'dg', this.value)"
+                class="touch-input w-full text-right font-medium text-base text-slate-800 bg-white border-2 border-slate-200 rounded-xl px-2.5 py-1 focus:outline-none focus:border-indigo-600"
+              />
+            </div>
+
+            <div class="text-right">
+              <span class="block text-xs font-semibold text-slate-500 mb-1">Thành Tiền</span>
+              <span class="text-lg font-black text-indigo-700 block">
+                ${lineTotal !== null ? formatCurrency(lineTotal) : '-'}
+              </span>
+            </div>
+          </div>
+        `;
+        cardContainer.appendChild(card);
+      });
+
+      // 2. RENDER CHẾ ĐỘ BẢNG (TABLE VIEW CÓ CUỘN NGANG ĐẦY ĐỦ KHÔNG BỊ CO CẮT)
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      filteredItems.forEach((item, index) => {
+        const qty = Number(item.sl) || 0;
+        const price = Number(item.dg) || 0;
+        const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
+
+        const tr = document.createElement('tr');
+        tr.className = index % 2 === 0 ? 'bg-white hover:bg-indigo-50/40 transition' : 'bg-slate-50/80 hover:bg-indigo-50/40 transition';
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-2 text-center text-slate-500 font-bold border-b border-slate-200">
             ${item.tt}
           </td>
-          <td class="py-3 px-3 sm:px-4 border-b border-slate-200">
-            <span class="touch-label font-bold text-slate-800 text-base sm:text-lg block">${item.name || '<span class="text-slate-300 italic">Trống</span>'}</span>
+          <td class="py-2.5 px-3 border-b border-slate-200">
+            <!-- Cho phép sửa trực tiếp Tên hàng -->
+            <input 
+              type="text"
+              value="${item.name || ''}"
+              onchange="handleNameChange(${item.tt}, this.value)"
+              placeholder="Tên hàng..."
+              class="w-full font-bold text-slate-800 bg-transparent hover:bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1.5 py-1 text-sm sm:text-base transition"
+            />
           </td>
-          <td class="py-2 px-2 sm:px-3 text-right border-b border-slate-200">
+          <!-- Cột Nháp trước Số lượng -->
+          <td class="py-2.5 px-2 text-right border-b border-slate-200 bg-amber-50/50">
+            <input
+              type="text"
+              value="${item.draft || ''}"
+              placeholder="vd: 5+6+23"
+              onchange="handleDraftChange(${item.tt}, this.value)"
+              class="touch-input w-full text-right font-medium text-amber-900 bg-white border border-amber-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
+              title="Nhập phép cộng kiểm kê, vd: 5+6+23"
+            />
+          </td>
+          <!-- Cột Số Lượng -->
+          <td class="py-2.5 px-2 text-right border-b border-slate-200">
             <input
               type="number"
               step="any"
               value="${item.sl !== null && item.sl !== undefined ? item.sl : ''}"
               placeholder="0"
-              onchange="updateItemField(${item.tt}, 'sl', this.value)"
-              class="touch-input w-full text-right font-bold text-base sm:text-lg text-slate-900 bg-white border-2 border-slate-300 rounded-xl px-2.5 py-1.5 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 focus:outline-none transition shadow-sm"
+              onchange="updateField(${item.tt}, 'sl', this.value)"
+              class="touch-input w-full text-right font-bold text-indigo-900 bg-white border-2 border-slate-300 rounded-lg px-2 py-1 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm sm:text-base"
             />
           </td>
-          <td class="py-2 px-2 sm:px-3 text-right border-b border-slate-200">
+          <!-- Cột Đơn Giá -->
+          <td class="py-2.5 px-2 text-right border-b border-slate-200">
             <input
               type="number"
               step="any"
               value="${item.dg !== null && item.dg !== undefined ? item.dg : ''}"
               placeholder="0"
-              onchange="updateItemField(${item.tt}, 'dg', this.value)"
-              class="touch-input w-full text-right font-medium text-base sm:text-lg text-slate-800 bg-white border-2 border-slate-300 rounded-xl px-2.5 py-1.5 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 focus:outline-none transition shadow-sm"
+              onchange="updateField(${item.tt}, 'dg', this.value)"
+              class="touch-input w-full text-right font-medium text-slate-800 bg-white border-2 border-slate-300 rounded-lg px-2 py-1 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm sm:text-base"
             />
           </td>
-          <td class="py-3 px-3 sm:px-4 text-right font-bold text-base sm:text-lg text-indigo-700 border-b border-slate-200">
+          <!-- Thành tiền -->
+          <td class="py-2.5 px-3 text-right font-bold text-indigo-700 border-b border-slate-200 text-sm sm:text-base">
             ${lineTotal !== null ? formatCurrency(lineTotal) : '-'}
           </td>
         `;
-        tbody.appendChild(row);
+        tbody.appendChild(tr);
       });
 
       const emptyMsg = document.getElementById('emptyMessage');
@@ -301,21 +566,7 @@
       updateStats();
     }
 
-    // Cập nhật giá trị khi người dùng gõ
-    function updateItemField(tt, field, val) {
-      const item = inventory.find(i => i.tt === tt);
-      if (item) {
-        if (val === '' || val === null) {
-          item[field] = '';
-        } else {
-          item[field] = parseFloat(val) || 0;
-        }
-        saveData();
-        renderTable();
-      }
-    }
-
-    // Cập nhật phần thống kê bên dưới
+    // Cập nhật thống kê
     function updateStats() {
       let countWithStock = 0;
       let totalQty = 0;
@@ -343,30 +594,32 @@
       document.getElementById('statTotalAmount').textContent = formatCurrency(totalAmount);
     }
 
-    // XUẤT EXCEL (CSV chuẩn UTF-8 có BOM mở trực tiếp bằng Excel không lỗi dấu)
+    // Xuất Excel
     function exportToExcel() {
-      let csvContent = "\uFEFF"; // Byte Order Mark cho tiếng Việt UTF-8
-      csvContent += "STT,Tên Hàng,Số Lượng,Đơn Giá (VNĐ),Thành Tiền (VNĐ)\n";
+      let csvContent = "\uFEFF";
+      csvContent += `BẢNG THỐNG KÊ HÀNG TỒN - ${periodTitle}\n`;
+      csvContent += "STT,Tên Hàng,SL Nháp,Số Lượng,Đơn Giá (VNĐ),Thành Tiền (VNĐ)\n";
 
       inventory.forEach(item => {
         const name = `"${(item.name || '').replace(/"/g, '""')}"`;
+        const draft = `"${(item.draft || '').replace(/"/g, '""')}"`;
         const q = item.sl !== '' && item.sl !== null ? item.sl : '';
         const p = item.dg !== '' && item.dg !== null ? item.dg : '';
         const lineTotal = (item.sl !== '' && item.dg !== '') ? Math.round(Number(item.sl) * Number(item.dg)) : '';
-        csvContent += `${item.tt},${name},${q},${p},${lineTotal}\n`;
+        csvContent += `${item.tt},${name},${draft},${q},${p},${lineTotal}\n`;
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', 'Thong_Ke_Hang_Ton_10_2026.csv');
+      link.setAttribute('download', `Thong_Ke_Hang_Ton_${periodTitle.replace(/[/ ]/g, '_')}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
-    // XUẤT FILE PDF
+    // Xuất PDF
     function exportToPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
@@ -375,11 +628,9 @@
         format: 'a4'
       });
 
-      // Tiêu đề PDF
-      doc.setFontSize(16);
-      doc.text("BANG THONG KE HANG TON KHO - THANG 10/2026", 105, 15, { align: "center" });
+      doc.setFontSize(15);
+      doc.text(`BANG THONG KE HANG TON KHO - ${periodTitle.toUpperCase()}`, 105, 14, { align: "center" });
 
-      // Lấy dữ liệu dạng bảng
       const tableRows = [];
       let grandTotal = 0;
 
@@ -392,34 +643,36 @@
         tableRows.push([
           item.tt,
           item.name || '',
+          item.draft || '',
           item.sl !== '' && item.sl !== null ? item.sl : '-',
           item.dg !== '' && item.dg !== null ? Number(item.dg).toLocaleString('vi-VN') : '-',
           total > 0 ? Math.round(total).toLocaleString('vi-VN') : '-'
         ]);
       });
 
-      // Dòng tổng cộng cuối PDF
       tableRows.push([
         '',
         'TONG CONG THANH TIEN',
+        '',
         '',
         '',
         Math.round(grandTotal).toLocaleString('vi-VN') + ' VND'
       ]);
 
       doc.autoTable({
-        head: [['TT', 'Ten Hang', 'So Luong', 'Don Gia', 'Thanh Tien']],
+        head: [['TT', 'Ten Hang', 'SL Nhap', 'So Luong', 'Don Gia', 'Thanh Tien']],
         body: tableRows,
-        startY: 22,
+        startY: 20,
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [31, 73, 125], textColor: 255, halign: 'center' },
         columnStyles: {
-          0: { halign: 'center', cellWidth: 12 },
-          1: { cellWidth: 65 },
+          0: { halign: 'center', cellWidth: 10 },
+          1: { cellWidth: 55 },
           2: { halign: 'right', cellWidth: 25 },
-          3: { halign: 'right', cellWidth: 35 },
-          4: { halign: 'right', cellWidth: 40 }
+          3: { halign: 'right', cellWidth: 22 },
+          4: { halign: 'right', cellWidth: 32 },
+          5: { halign: 'right', cellWidth: 36 }
         },
         didDrawPage: function(data) {
           doc.setFontSize(8);
@@ -427,13 +680,12 @@
         }
       });
 
-      doc.save('Thong_Ke_Hang_Ton_10_2026.pdf');
+      doc.save(`Thong_Ke_Hang_Ton_${periodTitle.replace(/[/ ]/g, '_')}.pdf`);
     }
 
-    // Khởi chạy khi load xong
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
-      renderTable();
+      setViewMode(viewMode);
     });
   </script>
 </body>

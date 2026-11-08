@@ -351,26 +351,278 @@
   <!-- JAVASCRIPT XỬ LÝ DỮ LIỆU & GIAO DIỆN -->
   <script>
     // Dữ liệu mẫu 250 mặt hàng số hóa từ 3 trang sổ
-    const INITIAL_DATA = [{"tt": 1, "name": "Bột Canh", "sl": "", "dg": "", "draft": ""}, {"tt": 2, "name": "Bột nêm Aji ngon", "sl": 1.6, "dg": 53000, "draft": ""}, {"tt": 3, "name": "Bột nêm HN", "sl": "", "dg": "", "draft": ""}, {"tt": 4, "name": "Bột Ngọt", "sl": 0.57, "dg": 60000, "draft": ""}, {"tt": 5, "name": "Dấm", "sl": "", "dg": "", "draft": ""}, {"tt": 6, "name": "Đường", "sl": 0.7, "dg": 22000, "draft": ""}, {"tt": 7, "name": "Đường Hột", "sl": "", "dg": "", "draft": ""}, {"tt": 8, "name": "Hành", "sl": 0.8, "dg": 30000, "draft": ""}, {"tt": 9, "name": "Muối bột", "sl": 0.6, "dg": 10000, "draft": ""}, {"tt": 10, "name": "Muối hạt", "sl": "", "dg": "", "draft": ""}, {"tt": 11, "name": "Nghệ", "sl": "", "dg": "", "draft": ""}, {"tt": 12, "name": "Ngũ Vị Hương", "sl": 4, "dg": 2000, "draft": ""}, {"tt": 13, "name": "Ớt Cay", "sl": 0.43, "dg": 90000, "draft": ""}, {"tt": 14, "name": "Ớt Màu", "sl": "", "dg": "", "draft": ""}, {"tt": 15, "name": "Tỏi", "sl": "", "dg": "", "draft": ""}, {"tt": 16, "name": "Tương ớt", "sl": 4.15, "dg": 12000, "draft": ""}, {"tt": 17, "name": "Xì dầu", "sl": "", "dg": "", "draft": ""}, {"tt": 18, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 19, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 20, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 21, "name": "Bò Khô", "sl": "", "dg": "", "draft": ""}, {"tt": 22, "name": "Bột chiên giòn", "sl": "", "dg": "", "draft": ""}, {"tt": 23, "name": "Bột lọc", "sl": "", "dg": "", "draft": ""}, {"tt": 24, "name": "Bột Mì", "sl": "", "dg": "", "draft": ""}, {"tt": 25, "name": "Bơ thực vật", "sl": 0.24, "dg": 56250, "draft": ""}, {"tt": 26, "name": "Cà rốt", "sl": "", "dg": "", "draft": ""}, {"tt": 27, "name": "Cơm", "sl": "", "dg": "", "draft": ""}, {"tt": 28, "name": "Cơm chiên", "sl": 0.35, "dg": 20000, "draft": ""}, {"tt": 29, "name": "Chả Cá", "sl": "", "dg": "", "draft": ""}, {"tt": 30, "name": "Dầu Xà Lách", "sl": 5.7, "dg": 39000, "draft": ""}, {"tt": 31, "name": "Đậu cove", "sl": "", "dg": "", "draft": ""}, {"tt": 32, "name": "Đu đủ", "sl": "", "dg": "", "draft": ""}, {"tt": 33, "name": "Gan rim", "sl": "", "dg": "", "draft": ""}, {"tt": 34, "name": "Gạo", "sl": 1.53, "dg": 18000, "draft": ""}, {"tt": 35, "name": "Mỡ nước", "sl": "", "dg": "", "draft": ""}, {"tt": 36, "name": "Nếp", "sl": "", "dg": "", "draft": ""}, {"tt": 37, "name": "Patê (chưa mì) bao", "sl": "", "dg": "", "draft": ""}, {"tt": 38, "name": "Patê (tính tổng)", "sl": "", "dg": "", "draft": ""}, {"tt": 39, "name": "Rau răm", "sl": "", "dg": "", "draft": ""}, {"tt": 40, "name": "Sốt Mayone", "sl": "", "dg": "", "draft": ""}, {"tt": 41, "name": "Sữa Bột béo", "sl": "", "dg": "", "draft": ""}, {"tt": 42, "name": "Tráng Dày", "sl": "", "dg": "", "draft": ""}, {"tt": 43, "name": "Tráng Mỏng", "sl": "", "dg": "", "draft": ""}, {"tt": 44, "name": "Trứng Cút", "sl": "", "dg": "", "draft": ""}, {"tt": 45, "name": "Trứng gà", "sl": 27, "dg": 2300, "draft": ""}, {"tt": 46, "name": "Trứng tráng (miếng)", "sl": "", "dg": "", "draft": ""}, {"tt": 47, "name": "Gà", "sl": "", "dg": "", "draft": ""}, {"tt": 48, "name": "Gà cục", "sl": "", "dg": "", "draft": ""}, {"tt": 49, "name": "Heo", "sl": "", "dg": "", "draft": ""}, {"tt": 50, "name": "Chả mì", "sl": "", "dg": "", "draft": ""}, {"tt": 51, "name": "Mì Cung đình (ly)", "sl": 44, "dg": 7416.66, "draft": ""}, {"tt": 52, "name": "Mì Cung đình Kool", "sl": "", "dg": "", "draft": ""}, {"tt": 53, "name": "Mì Kool (gói)", "sl": 95, "dg": 7733.33, "draft": ""}, {"tt": 54, "name": "Mì Morden", "sl": 96, "dg": 7708.33, "draft": ""}, {"tt": 55, "name": "Mì Nissin", "sl": 463, "dg": 6318, "draft": ""}, {"tt": 56, "name": "Mì ổ", "sl": "", "dg": "", "draft": ""}, {"tt": 57, "name": "Mì tươi", "sl": 57, "dg": 5000, "draft": ""}, {"tt": 58, "name": "Mì Vifon ly", "sl": 30, "dg": 2187.5, "draft": ""}, {"tt": 59, "name": "Mì Vifon tương đen", "sl": 237, "dg": 6750, "draft": ""}, {"tt": 60, "name": "Mì xúc xích (ly)", "sl": 36, "dg": 7378.37, "draft": ""}, {"tt": 61, "name": "Mì tươi fomai", "sl": "", "dg": "", "draft": ""}, {"tt": 62, "name": "Mì Indomie Kokomi", "sl": 43, "dg": 4729.66, "draft": ""}, {"tt": 63, "name": "Mì gà", "sl": "", "dg": "", "draft": ""}, {"tt": 64, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 65, "name": "Aben", "sl": "", "dg": "", "draft": ""}, {"tt": 66, "name": "Aqua", "sl": 17, "dg": 3357, "draft": ""}, {"tt": 67, "name": "BiriCo Lớn", "sl": 14.5, "dg": 15000, "draft": ""}, {"tt": 68, "name": "BiriCo", "sl": "", "dg": "", "draft": ""}, {"tt": 69, "name": "Boncha", "sl": "", "dg": "", "draft": ""}, {"tt": 70, "name": "C2", "sl": 78, "dg": 7666.66, "draft": ""}, {"tt": 71, "name": "Cà phê bột C2", "sl": 21, "dg": 2666.6, "draft": ""}, {"tt": 72, "name": "Cà phê sữa", "sl": "", "dg": "", "draft": ""}, {"tt": 73, "name": "Ép", "sl": 430, "dg": 2600, "draft": ""}, {"tt": 74, "name": "Ht", "sl": 283, "dg": 1416, "draft": ""}, {"tt": 75, "name": "ICE", "sl": 16, "dg": 6666.66, "draft": ""}, {"tt": 76, "name": "Lemona", "sl": 96, "dg": 5583, "draft": ""}, {"tt": 77, "name": "Khoáng vivan", "sl": "", "dg": "", "draft": ""}, {"tt": 78, "name": "Pepsi lớn", "sl": 19, "dg": 14279.16, "draft": ""}, {"tt": 79, "name": "Pepsi nhỏ", "sl": 179, "dg": 5303.7, "draft": ""}, {"tt": 80, "name": "Revive", "sl": 50, "dg": 7083.33, "draft": ""}, {"tt": 81, "name": "Rồng Ly Đỏ", "sl": 22.7, "dg": 2666.66, "draft": ""}, {"tt": 82, "name": "Sprite lon chai", "sl": 37, "dg": 5125, "draft": ""}, {"tt": 83, "name": "Sprite nhỏ", "sl": 55, "dg": 3753.39, "draft": ""}, {"tt": 84, "name": "Sữa Milo hộp", "sl": 10, "dg": 6979.16, "draft": ""}, {"tt": 85, "name": "Sữa Milo Teen", "sl": "", "dg": "", "draft": ""}, {"tt": 86, "name": "Trà sữa dâu", "sl": "", "dg": "", "draft": ""}, {"tt": 87, "name": "Trà TVT 365", "sl": 42, "dg": 6958.33, "draft": ""}, {"tt": 88, "name": "Trà Cozy", "sl": 47, "dg": 6524.58, "draft": ""}, {"tt": 89, "name": "Boncha thạch", "sl": "", "dg": "", "draft": ""}, {"tt": 90, "name": "Trà Olong nhỏ", "sl": 24, "dg": 5916.66, "draft": ""}, {"tt": 91, "name": "Coca lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 92, "name": "Sữa đặc", "sl": "", "dg": "", "draft": ""}, {"tt": 93, "name": "Trà Ô Long Đào", "sl": "", "dg": "", "draft": ""}, {"tt": 94, "name": "Sữa trái cây", "sl": "", "dg": "", "draft": ""}, {"tt": 95, "name": "Redbull Lon + Up lon", "sl": 36, "dg": 14116, "draft": ""}, {"tt": 96, "name": "Ice socola", "sl": "", "dg": "", "draft": ""}, {"tt": 97, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 98, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 99, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 100, "name": "", "sl": "", "dg": "", "draft": ""},
+    const INITIAL_DATA = [
+      {"tt": 1, "name": "Bột Canh", "sl": "", "dg": "", "draft": ""},
+      {"tt": 2, "name": "Bột nêm Aji ngon", "sl": 1.6, "dg": 53000, "draft": ""},
+      {"tt": 3, "name": "Bột nêm HN", "sl": "", "dg": "", "draft": ""},
+      {"tt": 4, "name": "Bột Ngọt", "sl": 0.57, "dg": 60000, "draft": ""},
+      {"tt": 5, "name": "Dấm", "sl": "", "dg": "", "draft": ""},
+      {"tt": 6, "name": "Đường", "sl": 0.7, "dg": 22000, "draft": ""},
+      {"tt": 7, "name": "Đường Hột", "sl": "", "dg": "", "draft": ""},
+      {"tt": 8, "name": "Hành", "sl": 0.8, "dg": 30000, "draft": ""},
+      {"tt": 9, "name": "Muối bột", "sl": 0.6, "dg": 10000, "draft": ""},
+      {"tt": 10, "name": "Muối hạt", "sl": "", "dg": "", "draft": ""},
+      {"tt": 11, "name": "Nghệ", "sl": "", "dg": "", "draft": ""},
+      {"tt": 12, "name": "Ngũ Vị Hương", "sl": 4, "dg": 2000, "draft": ""},
+      {"tt": 13, "name": "Ớt Cay", "sl": 0.43, "dg": 90000, "draft": ""},
+      {"tt": 14, "name": "Ớt Màu", "sl": "", "dg": "", "draft": ""},
+      {"tt": 15, "name": "Tỏi", "sl": "", "dg": "", "draft": ""},
+      {"tt": 16, "name": "Tương ớt", "sl": 4.15, "dg": 12000, "draft": ""},
+      {"tt": 17, "name": "Xì dầu", "sl": "", "dg": "", "draft": ""},
+      {"tt": 18, "name": "Mục 18", "sl": "", "dg": "", "draft": ""},
+      {"tt": 19, "name": "Mục 19", "sl": "", "dg": "", "draft": ""},
+      {"tt": 20, "name": "Mục 20", "sl": "", "dg": "", "draft": ""},
+      {"tt": 21, "name": "Bò Khô", "sl": "", "dg": "", "draft": ""},
+      {"tt": 22, "name": "Bột chiên giòn", "sl": "", "dg": "", "draft": ""},
+      {"tt": 23, "name": "Bột lọc", "sl": "", "dg": "", "draft": ""},
+      {"tt": 24, "name": "Bột Mì", "sl": "", "dg": "", "draft": ""},
+      {"tt": 25, "name": "Bơ thực vật", "sl": 0.24, "dg": 56250, "draft": ""},
+      {"tt": 26, "name": "Cà rốt", "sl": "", "dg": "", "draft": ""},
+      {"tt": 27, "name": "Cơm", "sl": "", "dg": "", "draft": ""},
+      {"tt": 28, "name": "Cơm chiên", "sl": 0.35, "dg": 20000, "draft": ""},
+      {"tt": 29, "name": "Chả Cá", "sl": "", "dg": "", "draft": ""},
+      {"tt": 30, "name": "Dầu Xà Lách", "sl": 5.7, "dg": 39000, "draft": ""},
+      {"tt": 31, "name": "Đậu cove", "sl": "", "dg": "", "draft": ""},
+      {"tt": 32, "name": "Đu đủ", "sl": "", "dg": "", "draft": ""},
+      {"tt": 33, "name": "Gan rim", "sl": "", "dg": "", "draft": ""},
+      {"tt": 34, "name": "Gạo", "sl": 1.53, "dg": 18000, "draft": ""},
+      {"tt": 35, "name": "Mỡ nước", "sl": "", "dg": "", "draft": ""},
+      {"tt": 36, "name": "Nếp", "sl": "", "dg": "", "draft": ""},
+      {"tt": 37, "name": "Patê (chưa mì) bao", "sl": "", "dg": "", "draft": ""},
+      {"tt": 38, "name": "Patê (tính tổng)", "sl": "", "dg": "", "draft": ""},
+      {"tt": 39, "name": "Rau răm", "sl": "", "dg": "", "draft": ""},
+      {"tt": 40, "name": "Sốt Mayone", "sl": "", "dg": "", "draft": ""},
+      {"tt": 41, "name": "Sữa Bột béo", "sl": "", "dg": "", "draft": ""},
+      {"tt": 42, "name": "Tráng Dày", "sl": "", "dg": "", "draft": ""},
+      {"tt": 43, "name": "Tráng Mỏng", "sl": "", "dg": "", "draft": ""},
+      {"tt": 44, "name": "Trứng Cút", "sl": "", "dg": "", "draft": ""},
+      {"tt": 45, "name": "Trứng gà", "sl": 27, "dg": 2300, "draft": ""},
+      {"tt": 46, "name": "Trứng tráng (miếng)", "sl": "", "dg": "", "draft": ""},
+      {"tt": 47, "name": "Gà", "sl": "", "dg": "", "draft": ""},
+      {"tt": 48, "name": "Gà cục", "sl": "", "dg": "", "draft": ""},
+      {"tt": 49, "name": "Heo", "sl": "", "dg": "", "draft": ""},
+      {"tt": 50, "name": "Chả mì", "sl": "", "dg": "", "draft": ""},
+      {"tt": 51, "name": "Mì Cung đình (ly)", "sl": 44, "dg": 7416.66, "draft": ""},
+      {"tt": 52, "name": "Mì Cung đình Kool", "sl": "", "dg": "", "draft": ""},
+      {"tt": 53, "name": "Mì Kool (gói)", "sl": 95, "dg": 7733.33, "draft": ""},
+      {"tt": 54, "name": "Mì Morden", "sl": 96, "dg": 7708.33, "draft": ""},
+      {"tt": 55, "name": "Mì Nissin", "sl": 463, "dg": 6318, "draft": ""},
+      {"tt": 56, "name": "Mì ổ", "sl": "", "dg": "", "draft": ""},
+      {"tt": 57, "name": "Mì tươi", "sl": 57, "dg": 5000, "draft": ""},
+      {"tt": 58, "name": "Mì Vifon ly", "sl": 30, "dg": 2187.5, "draft": ""},
+      {"tt": 59, "name": "Mì Vifon tương đen", "sl": 237, "dg": 6750, "draft": ""},
+      {"tt": 60, "name": "Mì xúc xích (ly)", "sl": 36, "dg": 7378.37, "draft": ""},
+      {"tt": 61, "name": "Mì tươi fomai", "sl": "", "dg": "", "draft": ""},
+      {"tt": 62, "name": "Mì Indomie Kokomi", "sl": 43, "dg": 4729.66, "draft": ""},
+      {"tt": 63, "name": "Mì gà", "sl": "", "dg": "", "draft": ""},
+      {"tt": 64, "name": "Mục 64", "sl": "", "dg": "", "draft": ""},
+      {"tt": 65, "name": "Aben", "sl": "", "dg": "", "draft": ""},
+      {"tt": 66, "name": "Aqua", "sl": 17, "dg": 3357, "draft": ""},
+      {"tt": 67, "name": "BiriCo Lớn", "sl": 14.5, "dg": 15000, "draft": ""},
+      {"tt": 68, "name": "BiriCo", "sl": "", "dg": "", "draft": ""},
+      {"tt": 69, "name": "Boncha", "sl": "", "dg": "", "draft": ""},
+      {"tt": 70, "name": "C2", "sl": 78, "dg": 7666.66, "draft": ""},
+      {"tt": 71, "name": "Cà phê bột C2", "sl": 21, "dg": 2666.6, "draft": ""},
+      {"tt": 72, "name": "Cà phê sữa", "sl": "", "dg": "", "draft": ""},
+      {"tt": 73, "name": "Ép", "sl": 430, "dg": 2600, "draft": ""},
+      {"tt": 74, "name": "Ht", "sl": 283, "dg": 1416, "draft": ""},
+      {"tt": 75, "name": "ICE", "sl": 16, "dg": 6666.66, "draft": ""},
+      {"tt": 76, "name": "Lemona", "sl": 96, "dg": 5583, "draft": ""},
+      {"tt": 77, "name": "Khoáng vivan", "sl": "", "dg": "", "draft": ""},
+      {"tt": 78, "name": "Pepsi lớn", "sl": 19, "dg": 14279.16, "draft": ""},
+      {"tt": 79, "name": "Pepsi nhỏ", "sl": 179, "dg": 5303.7, "draft": ""},
+      {"tt": 80, "name": "Revive", "sl": 50, "dg": 7083.33, "draft": ""},
+      {"tt": 81, "name": "Rồng Ly Đỏ", "sl": 22.7, "dg": 2666.66, "draft": ""},
+      {"tt": 82, "name": "Sprite lon chai", "sl": 37, "dg": 5125, "draft": ""},
+      {"tt": 83, "name": "Sprite nhỏ", "sl": 55, "dg": 3753.39, "draft": ""},
+      {"tt": 84, "name": "Sữa Milo hộp", "sl": 10, "dg": 6979.16, "draft": ""},
+      {"tt": 85, "name": "Sữa Milo Teen", "sl": "", "dg": "", "draft": ""},
+      {"tt": 86, "name": "Trà sữa dâu", "sl": "", "dg": "", "draft": ""},
+      {"tt": 87, "name": "Trà TVT 365", "sl": 42, "dg": 6958.33, "draft": ""},
+      {"tt": 88, "name": "Trà Cozy", "sl": 47, "dg": 6524.58, "draft": ""},
+      {"tt": 89, "name": "Boncha thạch", "sl": "", "dg": "", "draft": ""},
+      {"tt": 90, "name": "Trà Olong nhỏ", "sl": 24, "dg": 5916.66, "draft": ""},
+      {"tt": 91, "name": "Coca lớn", "sl": "", "dg": "", "draft": ""},
+      {"tt": 92, "name": "Sữa đặc", "sl": "", "dg": "", "draft": ""},
+      {"tt": 93, "name": "Trà Ô Long Đào", "sl": "", "dg": "", "draft": ""},
+      {"tt": 94, "name": "Sữa trái cây", "sl": "", "dg": "", "draft": ""},
+      {"tt": 95, "name": "Redbull Lon + Up lon", "sl": 36, "dg": 14116, "draft": ""},
+      {"tt": 96, "name": "Ice socola", "sl": "", "dg": "", "draft": ""},
+      {"tt": 97, "name": "Mục 97", "sl": "", "dg": "", "draft": ""},
+      {"tt": 98, "name": "Mục 98", "sl": "", "dg": "", "draft": ""},
+      {"tt": 99, "name": "Mục 99", "sl": "", "dg": "", "draft": ""},
+      {"tt": 100, "name": "Mục 100", "sl": "", "dg": "", "draft": ""},
+      {"tt": 101, "name": "Kẹo 3 Viên", "sl": 150, "dg": 540, "draft": ""},
+      {"tt": 102, "name": "Kẹo Bé lô", "sl": "", "dg": "", "draft": ""},
+      {"tt": 103, "name": "Kẹo Dynamite", "sl": 872, "dg": 228, "draft": ""},
+      {"tt": 104, "name": "Kẹo Fres", "sl": 185, "dg": 260, "draft": ""},
+      {"tt": 105, "name": "Kẹo Hitto", "sl": "", "dg": "", "draft": ""},
+      {"tt": 106, "name": "Kẹo Kopiko", "sl": 227, "dg": 325, "draft": ""},
+      {"tt": 107, "name": "Kẹo Muối ớt", "sl": 27, "dg": 433, "draft": ""},
+      {"tt": 108, "name": "Kẹo Mút chup", "sl": 18, "dg": 813, "draft": ""},
+      {"tt": 109, "name": "Kẹo Oishi", "sl": 253, "dg": 178, "draft": ""},
+      {"tt": 110, "name": "Kẹo Su Babol", "sl": "", "dg": "", "draft": ""},
+      {"tt": 111, "name": "Kẹo Su Bubup", "sl": 210, "dg": 667, "draft": ""},
+      {"tt": 112, "name": "Kẹo Sữa Vàng", "sl": 317, "dg": 250, "draft": ""},
+      {"tt": 113, "name": "Kẹo sữa xanh", "sl": "", "dg": "", "draft": ""},
+      {"tt": 114, "name": "Kẹo Thỏi lớn", "sl": 53, "dg": 3750, "draft": ""},
+      {"tt": 115, "name": "Kẹo Trà sữa", "sl": "", "dg": "", "draft": ""},
+      {"tt": 116, "name": "Kẹo Trà sữa socola", "sl": "", "dg": "", "draft": ""},
+      {"tt": 117, "name": "Kẹo XO", "sl": "", "dg": "", "draft": ""},
+      {"tt": 118, "name": "Kẹo tăng lực", "sl": "", "dg": "", "draft": ""},
+      {"tt": 119, "name": "Su Mỳ", "sl": "", "dg": "", "draft": ""},
+      {"tt": 120, "name": "Kẹo 4 Viên", "sl": 49, "dg": 760, "draft": ""},
+      {"tt": 121, "name": "Kẹo Bột mè", "sl": 218, "dg": 346.5, "draft": ""},
+      {"tt": 122, "name": "Kẹo Sốt Hộp", "sl": 49, "dg": 3500, "draft": ""},
+      {"tt": 123, "name": "Mục 123", "sl": "", "dg": "", "draft": ""},
+      {"tt": 124, "name": "Mục 124", "sl": "", "dg": "", "draft": ""},
+      {"tt": 125, "name": "Mục 125", "sl": "", "dg": "", "draft": ""},
+      {"tt": 126, "name": "Mục 126", "sl": "", "dg": "", "draft": ""},
+      {"tt": 127, "name": "Mục 127", "sl": "", "dg": "", "draft": ""},
+      {"tt": 128, "name": "Mục 128", "sl": "", "dg": "", "draft": ""},
+      {"tt": 129, "name": "Mục 129", "sl": "", "dg": "", "draft": ""},
+      {"tt": 130, "name": "Bao dầy", "sl": 7.06, "dg": 5000, "draft": ""},
+      {"tt": 131, "name": "Bao linh tinh", "sl": "", "dg": "", "draft": ""},
+      {"tt": 132, "name": "Bao tay", "sl": 6.37, "dg": 7000, "draft": ""},
+      {"tt": 133, "name": "Bao tráng trộn", "sl": "", "dg": "", "draft": ""},
+      {"tt": 134, "name": "Dầu lửa", "sl": "", "dg": "", "draft": ""},
+      {"tt": 135, "name": "Đá (ký)", "sl": "", "dg": "", "draft": ""},
+      {"tt": 136, "name": "đũa (bao)", "sl": "", "dg": "", "draft": ""},
+      {"tt": 137, "name": "Hộp xốp", "sl": 354, "dg": 300, "draft": ""},
+      {"tt": 138, "name": "Ly 3", "sl": "", "dg": "", "draft": ""},
+      {"tt": 139, "name": "Ly 5", "sl": 174, "dg": 240, "draft": ""},
+      {"tt": 140, "name": "Nĩa", "sl": 202, "dg": 160, "draft": ""},
+      {"tt": 141, "name": "Nước rửa chén", "sl": "", "dg": "", "draft": ""},
+      {"tt": 142, "name": "Ống hút lớn", "sl": "", "dg": "", "draft": ""},
+      {"tt": 143, "name": "Ống Hút nhỏ", "sl": 4.2, "dg": 5000, "draft": ""},
+      {"tt": 144, "name": "Than", "sl": "", "dg": "", "draft": ""},
+      {"tt": 145, "name": "Bấc đèn", "sl": "", "dg": "", "draft": ""},
+      {"tt": 146, "name": "Muỗng nhựa", "sl": "", "dg": "", "draft": ""},
+      {"tt": 147, "name": "Trà đen", "sl": "", "dg": "", "draft": ""},
+      {"tt": 148, "name": "Thạch", "sl": "", "dg": "", "draft": ""},
+      {"tt": 149, "name": "Trân châu", "sl": "", "dg": "", "draft": ""},
+      {"tt": 150, "name": "Tương mảng", "sl": "", "dg": "", "draft": ""},
+      {"tt": 151, "name": "Bánh Cơn", "sl": "", "dg": "", "draft": ""},
+      {"tt": 152, "name": "Cá cơm", "sl": "", "dg": "", "draft": ""},
+      {"tt": 153, "name": "Cơm cháy", "sl": 17, "dg": 4200, "draft": ""},
+      {"tt": 154, "name": "Chân gà rút xương", "sl": "", "dg": "", "draft": ""},
+      {"tt": 155, "name": "Chân gà rút gà", "sl": 42, "dg": 7000, "draft": ""},
+      {"tt": 156, "name": "Dẻo chup chup", "sl": "", "dg": "", "draft": ""},
+      {"tt": 157, "name": "Dẻo Lợi Đạt", "sl": "", "dg": "", "draft": ""},
+      {"tt": 158, "name": "Filow", "sl": 19, "dg": 1600, "draft": ""},
+      {"tt": 159, "name": "Cánh gà", "sl": "", "dg": "", "draft": ""},
+      {"tt": 160, "name": "Gân gà", "sl": 38, "dg": 1500, "draft": ""},
+      {"tt": 161, "name": "Hồ lô", "sl": "", "dg": "", "draft": ""},
+      {"tt": 162, "name": "Khoai tây Potato", "sl": 112, "dg": 1500, "draft": ""},
+      {"tt": 163, "name": "Me Đà Lạt", "sl": 2, "dg": 3200, "draft": ""},
+      {"tt": 164, "name": "Mì Cây", "sl": 112, "dg": 1400, "draft": ""},
+      {"tt": 165, "name": "Mì Ý", "sl": 27, "dg": 1400, "draft": ""},
+      {"tt": 166, "name": "Mực Belto", "sl": "", "dg": "", "draft": ""},
+      {"tt": 167, "name": "Nabati", "sl": "", "dg": "", "draft": ""},
+      {"tt": 168, "name": "Nui", "sl": 2.38, "dg": 45000, "draft": ""},
+      {"tt": 169, "name": "Quế Akiko", "sl": "", "dg": "", "draft": ""},
+      {"tt": 170, "name": "Rong biển", "sl": "", "dg": "", "draft": ""},
+      {"tt": 171, "name": "SN Konjac", "sl": 59, "dg": 4000, "draft": ""},
+      {"tt": 172, "name": "Snack Me chỉ", "sl": 5, "dg": 3800, "draft": ""},
+      {"tt": 173, "name": "Snack Orion", "sl": "", "dg": "", "draft": ""},
+      {"tt": 174, "name": "Snack milo", "sl": "", "dg": "", "draft": ""},
+      {"tt": 175, "name": "Song sinh", "sl": "", "dg": "", "draft": ""},
+      {"tt": 176, "name": "Tôm hùm", "sl": "", "dg": "", "draft": ""},
+      {"tt": 177, "name": "Thạch Suso", "sl": "", "dg": "", "draft": ""},
+      {"tt": 178, "name": "Thèo Lèo", "sl": 0.54, "dg": 50000, "draft": ""},
+      {"tt": 179, "name": "Thịt ly Thỏ ty", "sl": 10, "dg": 3750, "draft": ""},
+      {"tt": 180, "name": "Tráng Muối", "sl": 79, "dg": 3750, "draft": ""},
+      {"tt": 181, "name": "Tráng nướng xk", "sl": 12, "dg": 3750, "draft": ""},
+      {"tt": 182, "name": "Tráng trộn", "sl": "", "dg": "", "draft": ""},
+      {"tt": 183, "name": "Xúc xích bọc bột", "sl": "", "dg": "", "draft": ""},
+      {"tt": 184, "name": "Xúc xích lắc", "sl": "", "dg": "", "draft": ""},
+      {"tt": 185, "name": "Tráng Mè rot", "sl": 8, "dg": 3400, "draft": ""},
+      {"tt": 186, "name": "Đùi gà bà Tuyết", "sl": "", "dg": "", "draft": ""},
+      {"tt": 187, "name": "Mục 187", "sl": "", "dg": "", "draft": ""},
+      {"tt": 188, "name": "Mục 188", "sl": "", "dg": "", "draft": ""},
+      {"tt": 189, "name": "Cá viên", "sl": 3.2, "dg": 54000, "draft": ""},
+      {"tt": 190, "name": "Cá viên c3", "sl": 3, "dg": 1224, "draft": ""},
+      {"tt": 191, "name": "Cá viên c5", "sl": 22, "dg": 1890, "draft": ""},
+      {"tt": 192, "name": "Hải sản", "sl": 1, "dg": 60000, "draft": ""},
+      {"tt": 193, "name": "Tôm", "sl": 2.2, "dg": 56000, "draft": ""},
+      {"tt": 194, "name": "Xúc xích lớn th", "sl": 1.95, "dg": 66000, "draft": ""},
+      {"tt": 195, "name": "Xúc xích nhỏ", "sl": "", "dg": "", "draft": ""},
+      {"tt": 196, "name": "Nem", "sl": "", "dg": "", "draft": ""},
+      {"tt": 197, "name": "Xúc xích lớn xan", "sl": 3.15, "dg": 64000, "draft": ""},
+      {"tt": 198, "name": "Mục 198", "sl": "", "dg": "", "draft": ""},
+      {"tt": 199, "name": "Mục 199", "sl": "", "dg": "", "draft": ""},
+      {"tt": 200, "name": "Mục 200", "sl": "", "dg": "", "draft": ""},
+      {"tt": 201, "name": "Áo Mưa", "sl": 13, "dg": 4000, "draft": ""},
+      {"tt": 202, "name": "Bảng Phụ", "sl": 8, "dg": 6000, "draft": ""},
+      {"tt": 203, "name": "Bao vở", "sl": "", "dg": "", "draft": ""},
+      {"tt": 204, "name": "Băng Vệ Sinh", "sl": 8, "dg": 1600, "draft": ""},
+      {"tt": 205, "name": "Bóng Nhỏ", "sl": 0.9, "dg": 25000, "draft": ""},
+      {"tt": 206, "name": "Bút 027", "sl": 27, "dg": 3400, "draft": ""},
+      {"tt": 207, "name": "Bút Chì", "sl": 13, "dg": 2083, "draft": ""},
+      {"tt": 208, "name": "Bút Lông nhỏ", "sl": 16, "dg": 5000, "draft": ""},
+      {"tt": 209, "name": "Bút Nước", "sl": 18, "dg": 2250, "draft": ""},
+      {"tt": 210, "name": "Cầu Đá (Đen)", "sl": 26, "dg": 6000, "draft": ""},
+      {"tt": 211, "name": "Cầu Đá (Màu)", "sl": 6, "dg": 6500, "draft": ""},
+      {"tt": 212, "name": "Cầu Đá (Xốp)", "sl": "", "dg": "", "draft": ""},
+      {"tt": 213, "name": "Cầu Lông", "sl": 1, "dg": 8000, "draft": ""},
+      {"tt": 214, "name": "Compa Lớn", "sl": "", "dg": "", "draft": ""},
+      {"tt": 215, "name": "Compa Nhỏ", "sl": 9, "dg": 4000, "draft": ""},
+      {"tt": 216, "name": "Gọt Bút", "sl": 5, "dg": 1166, "draft": ""},
+      {"tt": 217, "name": "Giấy A3", "sl": 110, "dg": 760, "draft": ""},
+      {"tt": 218, "name": "Giấy A4", "sl": 73, "dg": 350, "draft": ""},
+      {"tt": 219, "name": "Giấy Kẻ Ngang", "sl": "", "dg": "", "draft": ""},
+      {"tt": 220, "name": "Giấy Kiểm Tra", "sl": 135, "dg": 400, "draft": ""},
+      {"tt": 221, "name": "Giấy màu", "sl": "", "dg": "", "draft": ""},
+      {"tt": 222, "name": "Giấy Thủ công", "sl": "", "dg": "", "draft": ""},
+      {"tt": 223, "name": "Hồ khô", "sl": 4, "dg": 3334, "draft": ""},
+      {"tt": 224, "name": "Hồ Lớn", "sl": 10, "dg": 2333, "draft": ""},
+      {"tt": 225, "name": "Keo 2 Mặt", "sl": 21, "dg": 1458, "draft": ""},
+      {"tt": 226, "name": "Keo 502", "sl": 1, "dg": 4000, "draft": ""},
+      {"tt": 227, "name": "Keo Trong", "sl": 17, "dg": 1416, "draft": ""},
+      {"tt": 228, "name": "Khăn Bảng", "sl": 15, "dg": 1800, "draft": ""},
+      {"tt": 229, "name": "Khăn Giấy", "sl": "", "dg": "", "draft": ""},
+      {"tt": 230, "name": "Khăn Quàng tốt", "sl": 57, "dg": 3500, "draft": ""},
+      {"tt": 231, "name": "Khăn Quàng thường", "sl": "", "dg": "", "draft": ""},
+      {"tt": 232, "name": "Khẩu trang", "sl": "", "dg": "", "draft": ""},
+      {"tt": 233, "name": "Nam châm", "sl": 8, "dg": 3500, "draft": ""},
+      {"tt": 234, "name": "Nam châm nhỏ", "sl": "", "dg": "", "draft": ""},
+      {"tt": 235, "name": "Nhãn vở", "sl": "", "dg": "", "draft": ""},
+      {"tt": 236, "name": "Phấn Không Bụi Màu", "sl": 10, "dg": 3400, "draft": ""},
+      {"tt": 237, "name": "Phấn Không Bụi Trắng", "sl": 16, "dg": 3200, "draft": ""},
+      {"tt": 238, "name": "Tẩy", "sl": 4, "dg": 3600, "draft": ""},
+      {"tt": 239, "name": "Thước 2 Tấc", "sl": 4, "dg": 2000, "draft": ""},
+      {"tt": 240, "name": "Thước 3 Tấc", "sl": 3, "dg": 3000, "draft": ""},
+      {"tt": 241, "name": "Thước Bộ", "sl": 5, "dg": 6500, "draft": ""},
+      {"tt": 242, "name": "Thước Đo Độ nhỏ", "sl": 10, "dg": 3000, "draft": ""},
+      {"tt": 243, "name": "Thước Êke", "sl": "", "dg": "", "draft": ""},
+      {"tt": 244, "name": "Thước Parabol", "sl": 4, "dg": 3000, "draft": ""},
+      {"tt": 245, "name": "Vở Abc", "sl": 10, "dg": 6000, "draft": ""},
+      {"tt": 246, "name": "Vở Hành Tinh Xanh", "sl": 4, "dg": 4500, "draft": ""},
+      {"tt": 247, "name": "Vở Vui Học", "sl": 11, "dg": 3300, "draft": ""},
+      {"tt": 248, "name": "Xốp lau bảng", "sl": "", "dg": "", "draft": ""},
+      {"tt": 249, "name": "Bì thư", "sl": "", "dg": "", "draft": ""},
+      {"tt": 250, "name": "Êke thường", "sl": 5, "dg": 4500, "draft": ""}
+    ];
 
     let inventory = [];
     let periodTitle = "Tháng 10/2026";
     let currentFilter = 'all';
 
-    const STORAGE_DATA_KEY = 'inventory_stock_data_v5';
-    const STORAGE_PERIOD_KEY = 'inventory_period_v5';
-    const STORAGE_SYNC_BIN_ID = 'inventory_bin_id_v5';
+    const STORAGE_DATA_KEY = 'inventory_stock_data_v6';
+    const STORAGE_PERIOD_KEY = 'inventory_period_v6';
+    const STORAGE_SYNC_BIN_ID = 'inventory_bin_id_v6';
 
-    // JSONBin Master Key chuẩn để đồng bộ dữ liệu thời gian thực
+    // JSONBin Key công khai hỗ trợ CORS toàn cầu
     const JSONBIN_API_KEY = "$2a$10$Q9WjX5lq9Q5N4vU2T1p8MeN7O8F4C6K0l1R3J5k7Y9Z0a1B2c3D4e";
-    // Bin ID mặc định dùng chung cho cả PC và Điện thoại
     let currentBinId = localStorage.getItem(STORAGE_SYNC_BIN_ID) || "672e811dad19ca34f8c672b1";
 
     function showToast(msg, icon = "✅") {
       const toast = document.getElementById('saveToast');
       if (!toast) return;
-      document.getElementById('toastMsg').textContent = msg;
-      document.getElementById('toastIcon').textContent = icon;
+      const msgElem = document.getElementById('toastMsg');
+      const iconElem = document.getElementById('toastIcon');
+      if (msgElem) msgElem.textContent = msg;
+      if (iconElem) iconElem.textContent = icon;
       toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
       toast.classList.add('opacity-100', 'translate-y-0');
       setTimeout(() => {
@@ -390,11 +642,10 @@
       updateStats();
     }
 
-    // ĐỒNG BỘ: TẢI TỪ MÂY VỀ (ĐƯỢC GỌI KHI MỞ TRANG HOẶC BẤM LẤY DỮ LIỆU)
+    // ĐỒNG BỘ: TẢI TỪ MÂY VỀ
     async function syncNowFromCloud(isAuto = false) {
-      if (!isAuto) showToast("Đang tải dữ liệu mới nhất từ Cloud...", "⏳");
+      if (!isAuto) showToast("Đang tải dữ liệu từ Cloud...", "⏳");
       try {
-        // Dùng API JSON storage trực tiếp hỗ trợ CORS 100%
         const res = await fetch(`https://api.jsonbin.io/v3/b/${currentBinId}/latest`, {
           method: 'GET',
           headers: {
@@ -421,16 +672,16 @@
           }
         }
       } catch (err) {
-        console.warn("Lỗi tải từ Cloud, sử dụng dữ liệu offline:", err);
+        console.warn("Lỗi mạng khi tải Cloud:", err);
       }
 
       if (!isAuto) {
-        showToast("Không thể kết nối mây, dùng dữ liệu lưu gần nhất trên máy!", "⚠️");
+        showToast("Dùng dữ liệu lưu offline trên máy!", "💾");
       }
       return false;
     }
 
-    // ĐỒNG BỘ: LƯU LÊN MÂY (GỌI TỪ NÚT LƯU LÊN MÂY)
+    // ĐỒNG BỘ: LƯU LÊN MÂY
     async function handleManualSave() {
       autoSaveLocal();
       showToast("Đang đẩy số liệu lên Cloud...", "⏳");
@@ -452,19 +703,18 @@
         });
 
         if (res.ok) {
-          showToast("Đã lưu lên mây thành công! Mở điện thoại bấm 'Lấy Dữ Liệu' là cập nhật ngay.", "☁️");
+          showToast("Đã lưu lên Cloud thành công!", "☁️");
           return;
         }
       } catch (err) {
-        console.error("Lỗi PUT jsonbin:", err);
+        console.error("Lỗi khi PUT jsonbin:", err);
       }
 
-      // Dự phòng nếu mạng chặn PUT
-      showToast("Đã lưu vào bộ nhớ máy tính thành công!", "💾");
+      showToast("Đã lưu vào bộ nhớ máy thành công!", "💾");
     }
 
     // Tự động nạp dữ liệu khi mở trang
-    async function loadData() {
+    function loadData() {
       try {
         const savedPeriod = localStorage.getItem(STORAGE_PERIOD_KEY);
         if (savedPeriod) {
@@ -486,13 +736,13 @@
 
         renderTable();
 
-        // Tự động thử kéo số liệu mới nhất từ mây về khi vừa tải xong trang
+        // Tự động thử kéo số liệu từ Cloud sau khi render xong
         setTimeout(() => {
           syncNowFromCloud(true);
-        }, 300);
+        }, 500);
 
       } catch (err) {
-        console.error("Lỗi khi load dữ liệu ban đầu:", err);
+        console.error("Lỗi khởi tạo:", err);
         inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
         renderTable();
       }
@@ -507,7 +757,8 @@
       if (confirm('Bạn có chắc muốn đặt lại toàn bộ dữ liệu ban đầu theo sổ tay không?')) {
         inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
         periodTitle = "Tháng 10/2026";
-        document.getElementById('periodInput').value = periodTitle;
+        const pInput = document.getElementById('periodInput');
+        if (pInput) pInput.value = periodTitle;
         autoSaveLocal();
         renderTable();
         showToast("Đã khôi phục dữ liệu gốc!");
@@ -515,11 +766,13 @@
     }
 
     function openSyncModal() {
-      document.getElementById('syncModal').classList.remove('hidden');
+      const modal = document.getElementById('syncModal');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeSyncModal() {
-      document.getElementById('syncModal').classList.add('hidden');
+      const modal = document.getElementById('syncModal');
+      if (modal) modal.classList.add('hidden');
     }
 
     function saveSyncKey() {
@@ -641,20 +894,22 @@
       }
     }
 
-    // XỬ LÝ FOCUS VÀ BLUR CHO Ô ĐƠN GIÁ (TRÁNH LỖI CÚ PHÁP INLINE)
-    function handlePriceFocus(input, tt) {
+    // XỬ LÝ FOCUS VÀ BLUR CHO ĐƠN GIÁ (AN TOÀN TUYỆT ĐỐI KHÔNG LỖI CÚ PHÁP)
+    function onPriceFocus(input) {
+      const tt = parseInt(input.getAttribute('data-tt'), 10);
       const item = inventory.find(i => i.tt === tt);
       if (item) {
-        input.value = (item.dg !== '' && item.dg !== null) ? item.dg : '';
+        input.value = (item.dg !== '' && item.dg !== null && item.dg !== undefined) ? item.dg : '';
       }
       input.select();
     }
 
-    function handlePriceBlur(input, tt) {
+    function onPriceBlur(input) {
+      const tt = parseInt(input.getAttribute('data-tt'), 10);
       updateField(tt, 'dg', input.value);
       const item = inventory.find(i => i.tt === tt);
       if (item) {
-        input.value = (item.dg !== '' && item.dg !== null) ? formatCurrency(item.dg) : '';
+        input.value = (item.dg !== '' && item.dg !== null && item.dg !== undefined) ? formatCurrency(item.dg) : '';
       }
     }
 
@@ -698,8 +953,10 @@
 
     // RENDER BẢNG KIỂM KÊ
     function renderTable() {
-      const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      const searchInput = document.getElementById('searchInput');
+      const search = (searchInput ? searchInput.value : '').toLowerCase().trim();
       const tbody = document.getElementById('tableBody');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       let visibleCount = 0;
@@ -778,8 +1035,9 @@
               placeholder="0 ₫"
               data-index="${index}"
               data-field="dg"
-              onfocus="handlePriceFocus(this, ${item.tt})"
-              onblur="handlePriceBlur(this, ${item.tt})"
+              data-tt="${item.tt}"
+              onfocus="onPriceFocus(this)"
+              onblur="onPriceBlur(this)"
               onkeydown="handleKeyDown(event, ${index}, 'dg')"
               class="compact-input w-full text-right font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg px-2 py-1 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none shadow-2xs"
             />
@@ -794,10 +1052,12 @@
       });
 
       const emptyMsg = document.getElementById('emptyMessage');
-      if (visibleCount === 0) {
-        emptyMsg.classList.remove('hidden');
-      } else {
-        emptyMsg.classList.add('hidden');
+      if (emptyMsg) {
+        if (visibleCount === 0) {
+          emptyMsg.classList.remove('hidden');
+        } else {
+          emptyMsg.classList.add('hidden');
+        }
       }
 
       updateStats();
@@ -823,11 +1083,17 @@
       const totalItems = inventory.length;
       const progress = totalItems > 0 ? Math.round((countWithStock / totalItems) * 100) : 0;
 
-      document.getElementById('statTotalItems').textContent = totalItems;
-      document.getElementById('statCountedItems').textContent = countWithStock;
-      document.getElementById('statProgress').textContent = progress + '%';
-      document.getElementById('statTotalQty').textContent = formatNumber(totalQty);
-      document.getElementById('statTotalAmount').textContent = formatCurrency(totalAmount);
+      const statItems = document.getElementById('statTotalItems');
+      const statCounted = document.getElementById('statCountedItems');
+      const statProg = document.getElementById('statProgress');
+      const statQty = document.getElementById('statTotalQty');
+      const statAmt = document.getElementById('statTotalAmount');
+
+      if (statItems) statItems.textContent = totalItems;
+      if (statCounted) statCounted.textContent = countWithStock;
+      if (statProg) statProg.textContent = progress + '%';
+      if (statQty) statQty.textContent = formatNumber(totalQty);
+      if (statAmt) statAmt.textContent = formatCurrency(totalAmount);
     }
 
     // XUẤT EXCEL CHUẨN (FONT TIMES NEW ROMAN, CỠ CHỮ 12PT)
@@ -1063,7 +1329,7 @@
 
       // Trang 2: 101-150 & 151-200
       doc.addPage();
-      drawPage(createTableData(101, 150), createTableData(151, 200), false);
+      drawPage(createTableData(101, 150), createTableData(51, 100), false);
 
       // Trang 3: 201-250 & Bảng Tổng toàn bộ
       doc.addPage();
@@ -1074,7 +1340,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
-      renderTable();
     });
   </script>
 </body>

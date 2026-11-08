@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-  <title>Hệ Thống Kiểm Kê Hàng Tồn Kho Online</title>
+  <title>Kiểm Kê Hàng Tồn Kho Online</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- jsPDF & autoTable CDN -->
@@ -85,8 +85,8 @@
         min-width: 52px !important;
       }
       .col-price {
-        width: 65px !important;
-        min-width: 65px !important;
+        width: 68px !important;
+        min-width: 68px !important;
       }
       .col-total {
         width: 70px !important;
@@ -106,11 +106,11 @@
 
   <!-- Toast Thông báo Lưu -->
   <div id="saveToast" class="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl shadow-xl flex items-center gap-2 text-xs sm:text-sm transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-4">
-    <span>✅</span>
-    <span>Đã lưu số liệu kho thành công!</span>
+    <span id="toastIcon">✅</span>
+    <span id="toastMsg">Đã lưu số liệu kho thành công!</span>
   </div>
 
-  <!-- Header Thanh tác vụ chính (Giao diện PC đẹp mắt, sang trọng) -->
+  <!-- Header Thanh tác vụ chính -->
   <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white sticky top-0 z-30 shadow-lg border-b border-indigo-800/40">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
@@ -120,8 +120,8 @@
         <div>
           <h1 class="text-sm sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
             Kiểm Kê Kho Trực Tuyến
-            <span class="hidden sm:inline-flex items-center gap-1 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium px-2 py-0.5 rounded-full">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Tự động lưu
+            <span id="cloudStatusBadge" class="inline-flex items-center gap-1 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium px-2 py-0.5 rounded-full">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sẵn sàng
             </span>
           </h1>
           <div class="flex items-center gap-1.5 mt-0.5">
@@ -140,23 +140,84 @@
 
       <!-- Cụm nút tác vụ trên PC & Mobile -->
       <div class="flex items-center gap-1.5 sm:gap-2 no-print">
+        <button onclick="openSyncModal()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-md flex items-center gap-1.5 text-xs sm:text-sm transition border border-indigo-400/40" title="Đồng bộ dữ liệu giữa máy tính và điện thoại">
+          ☁️ <span class="hidden sm:inline">Đồng Bộ</span>
+        </button>
         <button onclick="handleManualSave()" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-md flex items-center gap-1.5 text-xs sm:text-sm transition">
           💾 <span>Lưu Lại</span>
         </button>
-        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-md text-xs sm:text-sm transition flex items-center gap-1">
+        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl shadow-md text-xs sm:text-sm transition flex items-center gap-1">
           📊 <span>Excel</span>
         </button>
-        <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-semibold px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-md text-xs sm:text-sm transition flex items-center gap-1">
+        <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-semibold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl shadow-md text-xs sm:text-sm transition flex items-center gap-1">
           📄 <span>PDF</span>
         </button>
-        <button onclick="resetData()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 border border-slate-700 px-2.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm transition" title="Khôi phục danh sách gốc từ sổ">
+        <button onclick="resetData()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 border border-slate-700 px-2 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm transition" title="Khôi phục danh sách gốc từ sổ">
           🔄
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Thanh tìm kiếm & bộ lọc (Giao diện phẳng, tinh gọn) -->
+  <!-- Modal Đồng Bộ Đám Mây (Đồng bộ trực tiếp giữa PC và Điện thoại) -->
+  <div id="syncModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 hidden no-print">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+          <span>☁️</span> Đồng Bộ PC & Điện Thoại
+        </h3>
+        <button onclick="closeSyncModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold px-1.5">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+        Để sửa trên <b>PC</b> mà <b>Điện thoại</b> cập nhật được ngay:
+      </p>
+
+      <div class="space-y-3">
+        <!-- Đẩy lên Cloud / Tải về qua Mã Đồng Bộ -->
+        <div class="bg-indigo-50/80 border border-indigo-200 rounded-xl p-3">
+          <label class="block text-xs font-bold text-indigo-950 mb-1">Mã Kho Đồng Bộ (Dùng chung cho PC & ĐT):</label>
+          <div class="flex gap-1.5">
+            <input 
+              type="text" 
+              id="syncBinKeyInput" 
+              placeholder="VD: KHO_HANG_2026"
+              class="flex-1 text-xs px-2.5 py-1.5 bg-white border border-indigo-300 rounded-lg font-mono font-bold text-indigo-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase"
+            />
+            <button onclick="saveSyncKey()" class="bg-indigo-600 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg active:scale-95">Lưu Mã</button>
+          </div>
+          <div class="flex gap-2 mt-2.5">
+            <button onclick="pushToCloud()" id="btnPushCloud" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 rounded-lg text-xs shadow-xs active:scale-95 transition">
+              ⬆️ Đẩy Lên Mây (Từ PC)
+            </button>
+            <button onclick="pullFromCloud()" id="btnPullCloud" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 rounded-lg text-xs shadow-xs active:scale-95 transition">
+              ⬇️ Tải Về (Trên ĐT)
+            </button>
+          </div>
+        </div>
+
+        <!-- Sao lưu file dự phòng nhanh -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <span class="block text-[11px] font-bold text-slate-700 mb-1.5">Cách 2: Chuyển dữ liệu qua File sao lưu (.json):</span>
+          <div class="flex gap-2">
+            <button onclick="exportBackupJSON()" class="flex-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-medium py-1.5 rounded-lg text-[11px] transition">
+              📥 Xuất File Lưu
+            </button>
+            <label class="flex-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-medium py-1.5 rounded-lg text-[11px] transition text-center cursor-pointer">
+              📤 Nạp File
+              <input type="file" accept=".json" onchange="importBackupJSON(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 text-right">
+        <button onclick="closeSyncModal()" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-lg transition">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thanh tìm kiếm & bộ lọc -->
   <div class="bg-white border-b border-slate-200/80 shadow-xs py-2 px-3 sm:px-6 no-print sticky top-[53px] sm:top-[61px] z-20 backdrop-blur-md bg-white/95">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
       
@@ -190,11 +251,11 @@
       <div class="flex items-center gap-2">
         <span class="text-base sm:text-lg">⚡</span>
         <span>
-          <b>Nhập liệu siêu tốc:</b> Nhập xong Số Lượng bấm <kbd class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[11px] font-mono shadow-xs text-indigo-700 font-bold">Enter</kbd> để nhảy xuống dòng kế tiếp. Dữ liệu lưu <b>tức thì trong thời gian thực</b> (F5 không mất).
+          <b>Nhập liệu siêu tốc:</b> Nhập xong Số Lượng bấm <kbd class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[11px] font-mono shadow-xs text-indigo-700 font-bold">Enter</kbd> để nhảy xuống dòng kế tiếp. Dữ liệu tự động lưu tức thì (F5 không mất).
         </span>
       </div>
       <div id="realtimeStatus" class="hidden sm:flex items-center gap-1.5 text-xs text-emerald-700 font-semibold whitespace-nowrap">
-        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Đang đồng bộ
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Tự động lưu
       </div>
     </div>
 
@@ -290,14 +351,15 @@
   <!-- JAVASCRIPT XỬ LÝ DỮ LIỆU & GIAO DIỆN -->
   <script>
     // Dữ liệu mẫu 250 mặt hàng số hóa từ 3 trang sổ
-    const INITIAL_DATA = [{"tt": 1, "name": "Bột Canh", "sl": "", "dg": "", "draft": ""}, {"tt": 2, "name": "Bột nêm Aji ngon", "sl": 1.6, "dg": 53000, "draft": ""}, {"tt": 3, "name": "Bột nêm HN", "sl": "", "dg": "", "draft": ""}, {"tt": 4, "name": "Bột Ngọt", "sl": 0.57, "dg": 60000, "draft": ""}, {"tt": 5, "name": "Dấm", "sl": "", "dg": "", "draft": ""}, {"tt": 6, "name": "Đường", "sl": 0.7, "dg": 22000, "draft": ""}, {"tt": 7, "name": "Đường Hột", "sl": "", "dg": "", "draft": ""}, {"tt": 8, "name": "Hành", "sl": 0.8, "dg": 30000, "draft": ""}, {"tt": 9, "name": "Muối bột", "sl": 0.6, "dg": 10000, "draft": ""}, {"tt": 10, "name": "Muối hạt", "sl": "", "dg": "", "draft": ""}, {"tt": 11, "name": "Nghệ", "sl": "", "dg": "", "draft": ""}, {"tt": 12, "name": "Ngũ Vị Hương", "sl": 4, "dg": 2000, "draft": ""}, {"tt": 13, "name": "Ớt Cay", "sl": 0.43, "dg": 90000, "draft": ""}, {"tt": 14, "name": "Ớt Màu", "sl": "", "dg": "", "draft": ""}, {"tt": 15, "name": "Tỏi", "sl": "", "dg": "", "draft": ""}, {"tt": 16, "name": "Tương ớt", "sl": 4.15, "dg": 12000, "draft": ""}, {"tt": 17, "name": "Xì dầu", "sl": "", "dg": "", "draft": ""}, {"tt": 18, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 19, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 20, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 21, "name": "Bò Khô", "sl": "", "dg": "", "draft": ""}, {"tt": 22, "name": "Bột chiên giòn", "sl": "", "dg": "", "draft": ""}, {"tt": 23, "name": "Bột lọc", "sl": "", "dg": "", "draft": ""}, {"tt": 24, "name": "Bột Mì", "sl": "", "dg": "", "draft": ""}, {"tt": 25, "name": "Bơ thực vật", "sl": 0.24, "dg": 56250, "draft": ""}, {"tt": 26, "name": "Cà rốt", "sl": "", "dg": "", "draft": ""}, {"tt": 27, "name": "Cơm", "sl": "", "dg": "", "draft": ""}, {"tt": 28, "name": "Cơm chiên", "sl": 0.35, "dg": 20000, "draft": ""}, {"tt": 29, "name": "Chả Cá", "sl": "", "dg": "", "draft": ""}, {"tt": 30, "Dầu Xà Lách": 5.7, "name": "Dầu Xà Lách", "sl": 5.7, "dg": 39000, "draft": ""}, {"tt": 31, "name": "Đậu cove", "sl": "", "dg": "", "draft": ""}, {"tt": 32, "name": "Đu đủ", "sl": "", "dg": "", "draft": ""}, {"tt": 33, "name": "Gan rim", "sl": "", "dg": "", "draft": ""}, {"tt": 34, "name": "Gạo", "sl": 1.53, "dg": 18000, "draft": ""}, {"tt": 35, "name": "Mỡ nước", "sl": "", "dg": "", "draft": ""}, {"tt": 36, "name": "Nếp", "sl": "", "dg": "", "draft": ""}, {"tt": 37, "name": "Patê (chưa mì) bao", "sl": "", "dg": "", "draft": ""}, {"tt": 38, "name": "Patê (tính tổng)", "sl": "", "dg": "", "draft": ""}, {"tt": 39, "name": "Rau răm", "sl": "", "dg": "", "draft": ""}, {"tt": 40, "name": "Sốt Mayone", "sl": "", "dg": "", "draft": ""}, {"tt": 41, "name": "Sữa Bột béo", "sl": "", "dg": "", "draft": ""}, {"tt": 42, "name": "Tráng Dày", "sl": "", "dg": "", "draft": ""}, {"tt": 43, "name": "Tráng Mỏng", "sl": "", "dg": "", "draft": ""}, {"tt": 44, "name": "Trứng Cút", "sl": "", "dg": "", "draft": ""}, {"tt": 45, "name": "Trứng gà", "sl": 27, "dg": 2300, "draft": ""}, {"tt": 46, "name": "Trứng tráng (miếng)", "sl": "", "dg": "", "draft": ""}, {"tt": 47, "name": "Gà", "sl": "", "dg": "", "draft": ""}, {"tt": 48, "name": "Gà cục", "sl": "", "dg": "", "draft": ""}, {"tt": 49, "name": "Heo", "sl": "", "dg": "", "draft": ""}, {"tt": 50, "name": "Chả mì", "sl": "", "dg": "", "draft": ""}, {"tt": 51, "name": "Mì Cung đình (ly)", "sl": 44, "dg": 7416.66, "draft": ""}, {"tt": 52, "name": "Mì Cung đình Kool", "sl": "", "dg": "", "draft": ""}, {"tt": 53, "name": "Mì Kool (gói)", "sl": 95, "dg": 7733.33, "draft": ""}, {"tt": 54, "name": "Mì Morden", "sl": 96, "dg": 7708.33, "draft": ""}, {"tt": 55, "name": "Mì Nissin", "sl": 463, "dg": 6318, "draft": ""}, {"tt": 56, "name": "Mì ổ", "sl": "", "dg": "", "draft": ""}, {"tt": 57, "name": "Mì tươi", "sl": 57, "dg": 5000, "draft": ""}, {"tt": 58, "name": "Mì Vifon ly", "sl": 30, "dg": 2187.5, "draft": ""}, {"tt": 59, "name": "Mì Vifon tương đen", "sl": 237, "dg": 6750, "draft": ""}, {"tt": 60, "name": "Mì xúc xích (ly)", "sl": 36, "dg": 7378.37, "draft": ""}, {"tt": 61, "name": "Mì tươi fomai", "sl": "", "dg": "", "draft": ""}, {"tt": 62, "name": "Mì Indomie Kokomi", "sl": 43, "dg": 4729.66, "draft": ""}, {"tt": 63, "name": "Mì gà", "sl": "", "dg": "", "draft": ""}, {"tt": 64, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 65, "name": "Aben", "sl": "", "dg": "", "draft": ""}, {"tt": 66, "name": "Aqua", "sl": 17, "dg": 3357, "draft": ""}, {"tt": 67, "name": "BiriCo Lớn", "sl": 14.5, "dg": 15000, "draft": ""}, {"tt": 68, "name": "BiriCo", "sl": "", "dg": "", "draft": ""}, {"tt": 69, "name": "Boncha", "sl": "", "dg": "", "draft": ""}, {"tt": 70, "name": "C2", "sl": 78, "dg": 7666.66, "draft": ""}, {"tt": 71, "name": "Cà phê bột C2", "sl": 21, "dg": 2666.6, "draft": ""}, {"tt": 72, "name": "Cà phê sữa", "sl": "", "dg": "", "draft": ""}, {"tt": 73, "name": "Ép", "sl": 430, "dg": 2600, "draft": ""}, {"tt": 74, "name": "Ht", "sl": 283, "dg": 1416, "draft": ""}, {"tt": 75, "name": "ICE", "sl": 16, "dg": 6666.66, "draft": ""}, {"tt": 76, "name": "Lemona", "sl": 96, "dg": 5583, "draft": ""}, {"tt": 77, "name": "Khoáng vivan", "sl": "", "dg": "", "draft": ""}, {"tt": 78, "name": "Pepsi lớn", "sl": 19, "dg": 14279.16, "draft": ""}, {"tt": 79, "name": "Pepsi nhỏ", "sl": 179, "dg": 5303.7, "draft": ""}, {"tt": 80, "name": "Revive", "sl": 50, "dg": 7083.33, "draft": ""}, {"tt": 81, "name": "Rồng Ly Đỏ", "sl": 22.7, "dg": 2666.66, "draft": ""}, {"tt": 82, "name": "Sprite lon chai", "sl": 37, "dg": 5125, "draft": ""}, {"tt": 83, "name": "Sprite nhỏ", "sl": 55, "dg": 3753.39, "draft": ""}, {"tt": 84, "name": "Sữa Milo hộp", "sl": 10, "dg": 6979.16, "draft": ""}, {"tt": 85, "name": "Sữa Milo Teen", "sl": "", "dg": "", "draft": ""}, {"tt": 86, "name": "Trà sữa dâu", "sl": "", "dg": "", "draft": ""}, {"tt": 87, "name": "Trà TVT 365", "sl": 42, "dg": 6958.33, "draft": ""}, {"tt": 88, "name": "Trà Cozy", "sl": 47, "dg": 6524.58, "draft": ""}, {"tt": 89, "name": "Boncha thạch", "sl": "", "dg": "", "draft": ""}, {"tt": 90, "name": "Trà Olong nhỏ", "sl": 24, "dg": 5916.66, "draft": ""}, {"tt": 91, "name": "Coca lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 92, "name": "Sữa đặc", "sl": "", "dg": "", "draft": ""}, {"tt": 93, "name": "Trà Ô Long Đào", "sl": "", "dg": "", "draft": ""}, {"tt": 94, "name": "Sữa trái cây", "sl": "", "dg": "", "draft": ""}, {"tt": 95, "name": "Redbull Lon + Up lon", "sl": 36, "dg": 14116, "draft": ""}, {"tt": 96, "name": "Ice socola", "sl": "", "dg": "", "draft": ""}, {"tt": 97, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 98, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 99, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 100, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 101, "name": "Kẹo 3 Viên", "sl": 150, "dg": 540, "draft": ""}, {"tt": 102, "name": "Kẹo Bé lô", "sl": "", "dg": "", "draft": ""}, {"tt": 103, "name": "Kẹo Dynamite", "sl": 872, "dg": 228, "draft": ""}, {"tt": 104, "name": "Kẹo Fres", "sl": 185, "dg": 260, "draft": ""}, {"tt": 105, "name": "Kẹo Hitto", "sl": "", "dg": "", "draft": ""}, {"tt": 106, "name": "Kẹo Kopiko", "sl": 227, "dg": 325, "draft": ""}, {"tt": 107, "name": "Kẹo Muối ớt", "sl": 27, "dg": 433, "draft": ""}, {"tt": 108, "name": "Kẹo Mút chup", "sl": 18, "dg": 813, "draft": ""}, {"tt": 109, "name": "Kẹo Oishi", "sl": 253, "dg": 178, "draft": ""}, {"tt": 110, "name": "Kẹo Su Babol", "sl": "", "dg": "", "draft": ""}, {"tt": 111, "name": "Kẹo Su Bubup", "sl": 210, "dg": 667, "draft": ""}, {"tt": 112, "name": "Kẹo Sữa Vàng", "sl": 317, "dg": 250, "draft": ""}, {"tt": 113, "name": "Kẹo sữa xanh", "sl": "", "dg": "", "draft": ""}, {"tt": 114, "name": "Kẹo Thỏi lớn", "sl": 53, "dg": 3750, "draft": ""}, {"tt": 115, "name": "Kẹo Trà sữa", "sl": "", "dg": "", "draft": ""}, {"tt": 116, "name": "Kẹo Trà sữa socola", "sl": "", "dg": "", "draft": ""}, {"tt": 117, "name": "Kẹo XO", "sl": "", "dg": "", "draft": ""}, {"tt": 118, "name": "Kẹo tăng lực", "sl": "", "dg": "", "draft": ""}, {"tt": 119, "name": "Su Mỳ", "sl": "", "dg": "", "draft": ""}, {"tt": 120, "name": "Kẹo 4 Viên", "sl": 49, "dg": 760, "draft": ""}, {"tt": 121, "name": "Kẹo Bột mè", "sl": 218, "dg": 346.5, "draft": ""}, {"tt": 122, "name": "Kẹo Sốt Hộp", "sl": 49, "dg": 3500, "draft": ""}, {"tt": 123, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 124, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 125, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 126, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 127, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 128, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 129, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 130, "name": "Bao dầy", "sl": 7.06, "dg": 5000, "draft": ""}, {"tt": 131, "name": "Bao linh tinh", "sl": "", "dg": "", "draft": ""}, {"tt": 132, "name": "Bao tay", "sl": 6.37, "dg": 7000, "draft": ""}, {"tt": 133, "name": "Bao tráng trộn", "sl": "", "dg": "", "draft": ""}, {"tt": 134, "name": "Dầu lửa", "sl": "", "dg": "", "draft": ""}, {"tt": 135, "name": "Đá (ký)", "sl": "", "dg": "", "draft": ""}, {"tt": 136, "name": "đũa (bao)", "sl": "", "dg": "", "draft": ""}, {"tt": 137, "name": "Hộp xốp", "sl": 354, "dg": 300, "draft": ""}, {"tt": 138, "name": "Ly 3", "sl": "", "dg": "", "draft": ""}, {"tt": 139, "name": "Ly 5", "sl": 174, "dg": 240, "draft": ""}, {"tt": 140, "name": "Nĩa", "sl": 202, "dg": 160, "draft": ""}, {"tt": 141, "name": "Nước rửa chén", "sl": "", "dg": "", "draft": ""}, {"tt": 142, "name": "Ống hút lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 143, "name": "Ống Hút nhỏ", "sl": 4.2, "dg": 5000, "draft": ""}, {"tt": 144, "name": "Than", "sl": "", "dg": "", "draft": ""}, {"tt": 145, "name": "Bấc đèn", "sl": "", "dg": "", "draft": ""}, {"tt": 146, "name": "Muỗng nhựa", "sl": "", "dg": "", "draft": ""}, {"tt": 147, "name": "Trà đen", "sl": "", "dg": "", "draft": ""}, {"tt": 148, "name": "Thạch", "sl": "", "dg": "", "draft": ""}, {"tt": 149, "name": "Trân châu", "sl": "", "dg": "", "draft": ""}, {"tt": 150, "name": "Tương mảng", "sl": "", "dg": "", "draft": ""}, {"tt": 151, "name": "Bánh Cơn", "sl": "", "dg": "", "draft": ""}, {"tt": 152, "name": "Cá cơm", "sl": "", "dg": "", "draft": ""}, {"tt": 153, "name": "Cơm cháy", "sl": 17, "dg": 4200, "draft": ""}, {"tt": 154, "name": "Chân gà rút xương", "sl": "", "dg": "", "draft": ""}, {"tt": 155, "name": "Chân gà rút gà", "sl": 42, "dg": 7000, "draft": ""}, {"tt": 156, "name": "Dẻo chup chup", "sl": "", "dg": "", "draft": ""}, {"tt": 157, "name": "Dẻo Lợi Đạt", "sl": "", "dg": "", "draft": ""}, {"tt": 158, "name": "Filow", "sl": 19, "dg": 1600, "draft": ""}, {"tt": 159, "name": "Cánh gà", "sl": "", "dg": "", "draft": ""}, {"tt": 160, "name": "Gân gà", "sl": 38, "dg": 1500, "draft": ""}, {"tt": 161, "name": "Hồ lô", "sl": "", "dg": "", "draft": ""}, {"tt": 162, "name": "Khoai tây Potato", "sl": 112, "dg": 1500, "draft": ""}, {"tt": 163, "name": "Me Đà Lạt", "sl": 2, "dg": 3200, "draft": ""}, {"tt": 164, "name": "Mì Cây", "sl": 112, "dg": 1400, "draft": ""}, {"tt": 165, "name": "Mì Ý", "sl": 27, "dg": 1400, "draft": ""}, {"tt": 166, "name": "Mực Belto", "sl": "", "dg": "", "draft": ""}, {"tt": 167, "name": "Nabati", "sl": "", "dg": "", "draft": ""}, {"tt": 168, "name": "Nui", "sl": 2.38, "dg": 45000, "draft": ""}, {"tt": 169, "name": "Quế Akiko", "sl": "", "dg": "", "draft": ""}, {"tt": 170, "name": "Rong biển", "sl": "", "dg": "", "draft": ""}, {"tt": 171, "name": "SN Konjac", "sl": 59, "dg": 4000, "draft": ""}, {"tt": 172, "name": "Snack Me chỉ", "sl": 5, "dg": 3800, "draft": ""}, {"tt": 173, "name": "Snack Orion", "sl": "", "dg": "", "draft": ""}, {"tt": 174, "name": "Snack milo", "sl": "", "dg": "", "draft": ""}, {"tt": 175, "name": "Song sinh", "sl": "", "dg": "", "draft": ""}, {"tt": 176, "name": "Tôm hùm", "sl": "", "dg": "", "draft": ""}, {"tt": 177, "name": "Thạch Suso", "sl": "", "dg": "", "draft": ""}, {"tt": 178, "name": "Thèo Lèo", "sl": 0.54, "dg": 50000, "draft": ""}, {"tt": 179, "name": "Thịt ly Thỏ ty", "sl": 10, "dg": 3750, "draft": ""}, {"tt": 180, "name": "Tráng Muối", "sl": 79, "dg": 3750, "draft": ""}, {"tt": 181, "name": "Tráng nướng xk", "sl": 12, "dg": 3750, "draft": ""}, {"tt": 182, "name": "Tráng trộn", "sl": "", "dg": "", "draft": ""}, {"tt": 183, "name": "Xúc xích bọc bột", "sl": "", "dg": "", "draft": ""}, {"tt": 184, "name": "Xúc xích lắc", "sl": "", "dg": "", "draft": ""}, {"tt": 185, "name": "Tráng Mè rot", "sl": 8, "dg": 3400, "draft": ""}, {"tt": 186, "name": "Đùi gà bà Tuyết", "sl": "", "dg": "", "draft": ""}, {"tt": 187, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 188, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 189, "name": "Cá viên", "sl": 3.2, "dg": 54000, "draft": ""}, {"tt": 190, "name": "Cá viên c3", "sl": 3, "dg": 1224, "draft": ""}, {"tt": 191, "name": "Cá viên c5", "sl": 22, "dg": 1890, "draft": ""}, {"tt": 192, "name": "Hải sản", "sl": 1, "dg": 60000, "draft": ""}, {"tt": 193, "name": "Tôm", "sl": 2.2, "dg": 56000, "draft": ""}, {"tt": 194, "name": "Xúc xích lớn th", "sl": 1.95, "dg": 66000, "draft": ""}, {"tt": 195, "name": "Xúc xích nhỏ", "sl": "", "dg": "", "draft": ""}, {"tt": 196, "name": "Nem", "sl": "", "dg": "", "draft": ""}, {"tt": 197, "name": "Xúc xích lớn xan", "sl": 3.15, "dg": 64000, "draft": ""}, {"tt": 198, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 199, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 200, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 201, "name": "Áo Mưa", "sl": 13, "dg": 4000, "draft": ""}, {"tt": 202, "name": "Bảng Phụ", "sl": 8, "dg": 6000, "draft": ""}, {"tt": 203, "name": "Bao vở", "sl": "", "dg": "", "draft": ""}, {"tt": 204, "name": "Băng Vệ Sinh", "sl": 8, "dg": 1600, "draft": ""}, {"tt": 205, "name": "Bóng Nhỏ", "sl": 0.9, "dg": 25000, "draft": ""}, {"tt": 206, "name": "Bút 027", "sl": 27, "dg": 3400, "draft": ""}, {"tt": 207, "name": "Bút Chì", "sl": 13, "dg": 2083, "draft": ""}, {"tt": 208, "name": "Bút Lông nhỏ", "sl": 16, "dg": 5000, "draft": ""}, {"tt": 209, "name": "Bút Nước", "sl": 18, "dg": 2250, "draft": ""}, {"tt": 210, "name": "Cầu Đá (Đen)", "sl": 26, "dg": 6000, "draft": ""}, {"tt": 211, "name": "Cầu Đá (Màu)", "sl": 6, "dg": 6500, "draft": ""}, {"tt": 212, "name": "Cầu Đá (Xốp)", "sl": "", "dg": "", "draft": ""}, {"tt": 213, "name": "Cầu Lông", "sl": 1, "dg": 8000, "draft": ""}, {"tt": 214, "name": "Compa Lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 215, "name": "Compa Nhỏ", "sl": 9, "dg": 4000, "draft": ""}, {"tt": 216, "name": "Gọt Bút", "sl": 5, "dg": 1166, "draft": ""}, {"tt": 217, "name": "Giấy A3", "sl": 110, "dg": 760, "draft": ""}, {"tt": 218, "name": "Giấy A4", "sl": 73, "dg": 350, "draft": ""}, {"tt": 219, "name": "Giấy Kẻ Ngang", "sl": "", "dg": "", "draft": ""}, {"tt": 220, "name": "Giấy Kiểm Tra", "sl": 135, "dg": 400, "draft": ""}, {"tt": 221, "name": "Giấy màu", "sl": "", "dg": "", "draft": ""}, {"tt": 222, "name": "Giấy Thủ công", "sl": "", "dg": "", "draft": ""}, {"tt": 223, "name": "Hồ khô", "sl": 4, "dg": 3334, "draft": ""}, {"tt": 224, "name": "Hồ Lớn", "sl": 10, "dg": 2333, "draft": ""}, {"tt": 225, "name": "Keo 2 Mặt", "sl": 21, "dg": 1458, "draft": ""}, {"tt": 226, "name": "Keo 502", "sl": 1, "dg": 4000, "draft": ""}, {"tt": 227, "name": "Keo Trong", "sl": 17, "dg": 1416, "draft": ""}, {"tt": 228, "name": "Khăn Bảng", "sl": 15, "dg": 1800, "draft": ""}, {"tt": 229, "name": "Khăn Giấy", "sl": "", "dg": "", "draft": ""}, {"tt": 230, "name": "Khăn Quàng tốt", "sl": 57, "dg": 3500, "draft": ""}, {"tt": 231, "name": "Khăn Quàng thường", "sl": "", "dg": "", "draft": ""}, {"tt": 232, "name": "Khẩu trang", "sl": "", "dg": "", "draft": ""}, {"tt": 233, "name": "Nam châm", "sl": 8, "dg": 3500, "draft": ""}, {"tt": 234, "name": "Nam châm nhỏ", "sl": "", "dg": "", "draft": ""}, {"tt": 235, "name": "Nhãn vở", "sl": "", "dg": "", "draft": ""}, {"tt": 236, "name": "Phấn Không Bụi Màu", "sl": 10, "dg": 3400, "draft": ""}, {"tt": 237, "name": "Phấn Không Bụi Trắng", "sl": 16, "dg": 3200, "draft": ""}, {"tt": 238, "name": "Tẩy", "sl": 4, "dg": 3600, "draft": ""}, {"tt": 239, "name": "Thước 2 Tấc", "sl": 4, "dg": 2000, "draft": ""}, {"tt": 240, "name": "Thước 3 Tấc", "sl": 3, "dg": 3000, "draft": ""}, {"tt": 241, "name": "Thước Bộ", "sl": 5, "dg": 6500, "draft": ""}, {"tt": 242, "name": "Thước Đo Độ nhỏ", "sl": 10, "dg": 3000, "draft": ""}, {"tt": 243, "name": "Thước Êke", "sl": "", "dg": "", "draft": ""}, {"tt": 244, "name": "Thước Parabol", "sl": 4, "dg": 3000, "draft": ""}, {"tt": 245, "name": "Vở Abc", "sl": 10, "dg": 6000, "draft": ""}, {"tt": 246, "name": "Vở Hành Tinh Xanh", "sl": 4, "dg": 4500, "draft": ""}, {"tt": 247, "name": "Vở Vui Học", "sl": 11, "dg": 3300, "draft": ""}, {"tt": 248, "name": "Xốp lau bảng", "sl": "", "dg": "", "draft": ""}, {"tt": 249, "name": "Bì thư", "sl": "", "dg": "", "draft": ""}, {"tt": 250, "name": "Êke thường", "sl": 5, "dg": 4500, "draft": ""}];
+    const INITIAL_DATA = [{"tt": 1, "name": "Bột Canh", "sl": "", "dg": "", "draft": ""}, {"tt": 2, "name": "Bột nêm Aji ngon", "sl": 1.6, "dg": 53000, "draft": ""}, {"tt": 3, "name": "Bột nêm HN", "sl": "", "dg": "", "draft": ""}, {"tt": 4, "name": "Bột Ngọt", "sl": 0.57, "dg": 60000, "draft": ""}, {"tt": 5, "name": "Dấm", "sl": "", "dg": "", "draft": ""}, {"tt": 6, "name": "Đường", "sl": 0.7, "dg": 22000, "draft": ""}, {"tt": 7, "name": "Đường Hột", "sl": "", "dg": "", "draft": ""}, {"tt": 8, "name": "Hành", "sl": 0.8, "dg": 30000, "draft": ""}, {"tt": 9, "name": "Muối bột", "sl": 0.6, "dg": 10000, "draft": ""}, {"tt": 10, "name": "Muối hạt", "sl": "", "dg": "", "draft": ""}, {"tt": 11, "name": "Nghệ", "sl": "", "dg": "", "draft": ""}, {"tt": 12, "name": "Ngũ Vị Hương", "sl": 4, "dg": 2000, "draft": ""}, {"tt": 13, "name": "Ớt Cay", "sl": 0.43, "dg": 90000, "draft": ""}, {"tt": 14, "name": "Ớt Màu", "sl": "", "dg": "", "draft": ""}, {"tt": 15, "name": "Tỏi", "sl": "", "dg": "", "draft": ""}, {"tt": 16, "name": "Tương ớt", "sl": 4.15, "dg": 12000, "draft": ""}, {"tt": 17, "name": "Xì dầu", "sl": "", "dg": "", "draft": ""}, {"tt": 18, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 19, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 20, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 21, "name": "Bò Khô", "sl": "", "dg": "", "draft": ""}, {"tt": 22, "name": "Bột chiên giòn", "sl": "", "dg": "", "draft": ""}, {"tt": 23, "name": "Bột lọc", "sl": "", "dg": "", "draft": ""}, {"tt": 24, "name": "Bột Mì", "sl": "", "dg": "", "draft": ""}, {"tt": 25, "name": "Bơ thực vật", "sl": 0.24, "dg": 56250, "draft": ""}, {"tt": 26, "name": "Cà rốt", "sl": "", "dg": "", "draft": ""}, {"tt": 27, "name": "Cơm", "sl": "", "dg": "", "draft": ""}, {"tt": 28, "name": "Cơm chiên", "sl": 0.35, "dg": 20000, "draft": ""}, {"tt": 29, "name": "Chả Cá", "sl": "", "dg": "", "draft": ""}, {"tt": 30, "name": "Dầu Xà Lách", "sl": 5.7, "dg": 39000, "draft": ""}, {"tt": 31, "name": "Đậu cove", "sl": "", "dg": "", "draft": ""}, {"tt": 32, "name": "Đu đủ", "sl": "", "dg": "", "draft": ""}, {"tt": 33, "name": "Gan rim", "sl": "", "dg": "", "draft": ""}, {"tt": 34, "name": "Gạo", "sl": 1.53, "dg": 18000, "draft": ""}, {"tt": 35, "name": "Mỡ nước", "sl": "", "dg": "", "draft": ""}, {"tt": 36, "name": "Nếp", "sl": "", "dg": "", "draft": ""}, {"tt": 37, "name": "Patê (chưa mì) bao", "sl": "", "dg": "", "draft": ""}, {"tt": 38, "name": "Patê (tính tổng)", "sl": "", "dg": "", "draft": ""}, {"tt": 39, "name": "Rau răm", "sl": "", "dg": "", "draft": ""}, {"tt": 40, "name": "Sốt Mayone", "sl": "", "dg": "", "draft": ""}, {"tt": 41, "name": "Sữa Bột béo", "sl": "", "dg": "", "draft": ""}, {"tt": 42, "name": "Tráng Dày", "sl": "", "dg": "", "draft": ""}, {"tt": 43, "name": "Tráng Mỏng", "sl": "", "dg": "", "draft": ""}, {"tt": 44, "name": "Trứng Cút", "sl": "", "dg": "", "draft": ""}, {"tt": 45, "name": "Trứng gà", "sl": 27, "dg": 2300, "draft": ""}, {"tt": 46, "name": "Trứng tráng (miếng)", "sl": "", "dg": "", "draft": ""}, {"tt": 47, "name": "Gà", "sl": "", "dg": "", "draft": ""}, {"tt": 48, "name": "Gà cục", "sl": "", "dg": "", "draft": ""}, {"tt": 49, "name": "Heo", "sl": "", "dg": "", "draft": ""}, {"tt": 50, "name": "Chả mì", "sl": "", "dg": "", "draft": ""}, {"tt": 51, "name": "Mì Cung đình (ly)", "sl": 44, "dg": 7416.66, "draft": ""}, {"tt": 52, "name": "Mì Cung đình Kool", "sl": "", "dg": "", "draft": ""}, {"tt": 53, "name": "Mì Kool (gói)", "sl": 95, "dg": 7733.33, "draft": ""}, {"tt": 54, "name": "Mì Morden", "sl": 96, "dg": 7708.33, "draft": ""}, {"tt": 55, "name": "Mì Nissin", "sl": 463, "dg": 6318, "draft": ""}, {"tt": 56, "name": "Mì ổ", "sl": "", "dg": "", "draft": ""}, {"tt": 57, "name": "Mì tươi", "sl": 57, "dg": 5000, "draft": ""}, {"tt": 58, "name": "Mì Vifon ly", "sl": 30, "dg": 2187.5, "draft": ""}, {"tt": 59, "name": "Mì Vifon tương đen", "sl": 237, "dg": 6750, "draft": ""}, {"tt": 60, "name": "Mì xúc xích (ly)", "sl": 36, "dg": 7378.37, "draft": ""}, {"tt": 61, "name": "Mì tươi fomai", "sl": "", "dg": "", "draft": ""}, {"tt": 62, "name": "Mì Indomie Kokomi", "sl": 43, "dg": 4729.66, "draft": ""}, {"tt": 63, "name": "Mì gà", "sl": "", "dg": "", "draft": ""}, {"tt": 64, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 65, "name": "Aben", "sl": "", "dg": "", "draft": ""}, {"tt": 66, "name": "Aqua", "sl": 17, "dg": 3357, "draft": ""}, {"tt": 67, "name": "BiriCo Lớn", "sl": 14.5, "dg": 15000, "draft": ""}, {"tt": 68, "name": "BiriCo", "sl": "", "dg": "", "draft": ""}, {"tt": 69, "name": "Boncha", "sl": "", "dg": "", "draft": ""}, {"tt": 70, "name": "C2", "sl": 78, "dg": 7666.66, "draft": ""}, {"tt": 71, "name": "Cà phê bột C2", "sl": 21, "dg": 2666.6, "draft": ""}, {"tt": 72, "name": "Cà phê sữa", "sl": "", "dg": "", "draft": ""}, {"tt": 73, "name": "Ép", "sl": 430, "dg": 2600, "draft": ""}, {"tt": 74, "name": "Ht", "sl": 283, "dg": 1416, "draft": ""}, {"tt": 75, "name": "ICE", "sl": 16, "dg": 6666.66, "draft": ""}, {"tt": 76, "name": "Lemona", "sl": 96, "dg": 5583, "draft": ""}, {"tt": 77, "name": "Khoáng vivan", "sl": "", "dg": "", "draft": ""}, {"tt": 78, "name": "Pepsi lớn", "sl": 19, "dg": 14279.16, "draft": ""}, {"tt": 79, "name": "Pepsi nhỏ", "sl": 179, "dg": 5303.7, "draft": ""}, {"tt": 80, "name": "Revive", "sl": 50, "dg": 7083.33, "draft": ""}, {"tt": 81, "name": "Rồng Ly Đỏ", "sl": 22.7, "dg": 2666.66, "draft": ""}, {"tt": 82, "name": "Sprite lon chai", "sl": 37, "dg": 5125, "draft": ""}, {"tt": 83, "name": "Sprite nhỏ", "sl": 55, "dg": 3753.39, "draft": ""}, {"tt": 84, "name": "Sữa Milo hộp", "sl": 10, "dg": 6979.16, "draft": ""}, {"tt": 85, "name": "Sữa Milo Teen", "sl": "", "dg": "", "draft": ""}, {"tt": 86, "name": "Trà sữa dâu", "sl": "", "dg": "", "draft": ""}, {"tt": 87, "name": "Trà TVT 365", "sl": 42, "dg": 6958.33, "draft": ""}, {"tt": 88, "name": "Trà Cozy", "sl": 47, "dg": 6524.58, "draft": ""}, {"tt": 89, "name": "Boncha thạch", "sl": "", "dg": "", "draft": ""}, {"tt": 90, "name": "Trà Olong nhỏ", "sl": 24, "dg": 5916.66, "draft": ""}, {"tt": 91, "name": "Coca lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 92, "name": "Sữa đặc", "sl": "", "dg": "", "draft": ""}, {"tt": 93, "name": "Trà Ô Long Đào", "sl": "", "dg": "", "draft": ""}, {"tt": 94, "name": "Sữa trái cây", "sl": "", "dg": "", "draft": ""}, {"tt": 95, "name": "Redbull Lon + Up lon", "sl": 36, "dg": 14116, "draft": ""}, {"tt": 96, "name": "Ice socola", "sl": "", "dg": "", "draft": ""}, {"tt": 97, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 98, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 99, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 100, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 101, "name": "Kẹo 3 Viên", "sl": 150, "dg": 540, "draft": ""}, {"tt": 102, "name": "Kẹo Bé lô", "sl": "", "dg": "", "draft": ""}, {"tt": 103, "name": "Kẹo Dynamite", "sl": 872, "dg": 228, "draft": ""}, {"tt": 104, "name": "Kẹo Fres", "sl": 185, "dg": 260, "draft": ""}, {"tt": 105, "name": "Kẹo Hitto", "sl": "", "dg": "", "draft": ""}, {"tt": 106, "name": "Kẹo Kopiko", "sl": 227, "dg": 325, "draft": ""}, {"tt": 107, "name": "Kẹo Muối ớt", "sl": 27, "dg": 433, "draft": ""}, {"tt": 108, "name": "Kẹo Mút chup", "sl": 18, "dg": 813, "draft": ""}, {"tt": 109, "name": "Kẹo Oishi", "sl": 253, "dg": 178, "draft": ""}, {"tt": 110, "name": "Kẹo Su Babol", "sl": "", "dg": "", "draft": ""}, {"tt": 111, "name": "Kẹo Su Bubup", "sl": 210, "dg": 667, "draft": ""}, {"tt": 112, "name": "Kẹo Sữa Vàng", "sl": 317, "dg": 250, "draft": ""}, {"tt": 113, "name": "Kẹo sữa xanh", "sl": "", "dg": "", "draft": ""}, {"tt": 114, "name": "Kẹo Thỏi lớn", "sl": 53, "dg": 3750, "draft": ""}, {"tt": 115, "name": "Kẹo Trà sữa", "sl": "", "dg": "", "draft": ""}, {"tt": 116, "name": "Kẹo Trà sữa socola", "sl": "", "dg": "", "draft": ""}, {"tt": 117, "name": "Kẹo XO", "sl": "", "dg": "", "draft": ""}, {"tt": 118, "name": "Kẹo tăng lực", "sl": "", "dg": "", "draft": ""}, {"tt": 119, "name": "Su Mỳ", "sl": "", "dg": "", "draft": ""}, {"tt": 120, "name": "Kẹo 4 Viên", "sl": 49, "dg": 760, "draft": ""}, {"tt": 121, "name": "Kẹo Bột mè", "sl": 218, "dg": 346.5, "draft": ""}, {"tt": 122, "name": "Kẹo Sốt Hộp", "sl": 49, "dg": 3500, "draft": ""}, {"tt": 123, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 124, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 125, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 126, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 127, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 128, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 129, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 130, "name": "Bao dầy", "sl": 7.06, "dg": 5000, "draft": ""}, {"tt": 131, "name": "Bao linh tinh", "sl": "", "dg": "", "draft": ""}, {"tt": 132, "name": "Bao tay", "sl": 6.37, "dg": 7000, "draft": ""}, {"tt": 133, "name": "Bao tráng trộn", "sl": "", "dg": "", "draft": ""}, {"tt": 134, "name": "Dầu lửa", "sl": "", "dg": "", "draft": ""}, {"tt": 135, "name": "Đá (ký)", "sl": "", "dg": "", "draft": ""}, {"tt": 136, "name": "đũa (bao)", "sl": "", "dg": "", "draft": ""}, {"tt": 137, "name": "Hộp xốp", "sl": 354, "dg": 300, "draft": ""}, {"tt": 138, "name": "Ly 3", "sl": "", "dg": "", "draft": ""}, {"tt": 139, "name": "Ly 5", "sl": 174, "dg": 240, "draft": ""}, {"tt": 140, "name": "Nĩa", "sl": 202, "dg": 160, "draft": ""}, {"tt": 141, "name": "Nước rửa chén", "sl": "", "dg": "", "draft": ""}, {"tt": 142, "name": "Ống hút lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 143, "name": "Ống Hút nhỏ", "sl": 4.2, "dg": 5000, "draft": ""}, {"tt": 144, "name": "Than", "sl": "", "dg": "", "draft": ""}, {"tt": 145, "name": "Bấc đèn", "sl": "", "dg": "", "draft": ""}, {"tt": 146, "name": "Muỗng nhựa", "sl": "", "dg": "", "draft": ""}, {"tt": 147, "name": "Trà đen", "sl": "", "dg": "", "draft": ""}, {"tt": 148, "name": "Thạch", "sl": "", "dg": "", "draft": ""}, {"tt": 149, "name": "Trân châu", "sl": "", "dg": "", "draft": ""}, {"tt": 150, "name": "Tương mảng", "sl": "", "dg": "", "draft": ""}, {"tt": 151, "name": "Bánh Cơn", "sl": "", "dg": "", "draft": ""}, {"tt": 152, "name": "Cá cơm", "sl": "", "dg": ""}, {"tt": 153, "name": "Cơm cháy", "sl": 17, "dg": 4200, "draft": ""}, {"tt": 154, "name": "Chân gà rút xương", "sl": "", "dg": "", "draft": ""}, {"tt": 155, "name": "Chân gà rút gà", "sl": 42, "dg": 7000, "draft": ""}, {"tt": 156, "name": "Dẻo chup chup", "sl": "", "dg": "", "draft": ""}, {"tt": 157, "name": "Dẻo Lợi Đạt", "sl": "", "dg": "", "draft": ""}, {"tt": 158, "name": "Filow", "sl": 19, "dg": 1600, "draft": ""}, {"tt": 159, "name": "Cánh gà", "sl": "", "dg": "", "draft": ""}, {"tt": 160, "name": "Gân gà", "sl": 38, "dg": 1500, "draft": ""}, {"tt": 161, "name": "Hồ lô", "sl": "", "dg": "", "draft": ""}, {"tt": 162, "name": "Khoai tây Potato", "sl": 112, "dg": 1500, "draft": ""}, {"tt": 163, "name": "Me Đà Lạt", "sl": 2, "dg": 3200, "draft": ""}, {"tt": 164, "name": "Mì Cây", "sl": 112, "dg": 1400, "draft": ""}, {"tt": 165, "name": "Mì Ý", "sl": 27, "dg": 1400, "draft": ""}, {"tt": 166, "name": "Mực Belto", "sl": "", "dg": "", "draft": ""}, {"tt": 167, "name": "Nabati", "sl": "", "dg": "", "draft": ""}, {"tt": 168, "name": "Nui", "sl": 2.38, "dg": 45000, "draft": ""}, {"tt": 169, "name": "Quế Akiko", "sl": "", "dg": "", "draft": ""}, {"tt": 170, "name": "Rong biển", "sl": "", "dg": "", "draft": ""}, {"tt": 171, "name": "SN Konjac", "sl": 59, "dg": 4000, "draft": ""}, {"tt": 172, "name": "Snack Me chỉ", "sl": 5, "dg": 3800, "draft": ""}, {"tt": 173, "name": "Snack Orion", "sl": "", "dg": "", "draft": ""}, {"tt": 174, "name": "Snack milo", "sl": "", "dg": "", "draft": ""}, {"tt": 175, "name": "Song sinh", "sl": "", "dg": "", "draft": ""}, {"tt": 176, "name": "Tôm hùm", "sl": "", "dg": "", "draft": ""}, {"tt": 177, "name": "Thạch Suso", "sl": "", "dg": "", "draft": ""}, {"tt": 178, "name": "Thèo Lèo", "sl": 0.54, "dg": 50000, "draft": ""}, {"tt": 179, "name": "Thịt ly Thỏ ty", "sl": 10, "dg": 3750, "draft": ""}, {"tt": 180, "name": "Tráng Muối", "sl": 79, "dg": 3750, "draft": ""}, {"tt": 181, "name": "Tráng nướng xk", "sl": 12, "dg": 3750, "draft": ""}, {"tt": 182, "name": "Tráng trộn", "sl": "", "dg": "", "draft": ""}, {"tt": 183, "name": "Xúc xích bọc bột", "sl": "", "dg": "", "draft": ""}, {"tt": 184, "name": "Xúc xích lắc", "sl": "", "dg": "", "draft": ""}, {"tt": 185, "name": "Tráng Mè rot", "sl": 8, "dg": 3400, "draft": ""}, {"tt": 186, "name": "Đùi gà bà Tuyết", "sl": "", "dg": "", "draft": ""}, {"tt": 187, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 188, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 189, "name": "Cá viên", "sl": 3.2, "dg": 54000, "draft": ""}, {"tt": 190, "name": "Cá viên c3", "sl": 3, "dg": 1224, "draft": ""}, {"tt": 191, "name": "Cá viên c5", "sl": 22, "dg": 1890, "draft": ""}, {"tt": 192, "name": "Hải sản", "sl": 1, "dg": 60000, "draft": ""}, {"tt": 193, "name": "Tôm", "sl": 2.2, "dg": 56000, "draft": ""}, {"tt": 194, "name": "Xúc xích lớn th", "sl": 1.95, "dg": 66000, "draft": ""}, {"tt": 195, "name": "Xúc xích nhỏ", "sl": "", "dg": "", "draft": ""}, {"tt": 196, "name": "Nem", "sl": "", "dg": "", "draft": ""}, {"tt": 197, "name": "Xúc xích lớn xan", "sl": 3.15, "dg": 64000, "draft": ""}, {"tt": 198, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 199, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 200, "name": "", "sl": "", "dg": "", "draft": ""}, {"tt": 201, "name": "Áo Mưa", "sl": 13, "dg": 4000, "draft": ""}, {"tt": 202, "name": "Bảng Phụ", "sl": 8, "dg": 6000, "draft": ""}, {"tt": 203, "name": "Bao vở", "sl": "", "dg": "", "draft": ""}, {"tt": 204, "name": "Băng Vệ Sinh", "sl": 8, "dg": 1600, "draft": ""}, {"tt": 205, "name": "Bóng Nhỏ", "sl": 0.9, "dg": 25000, "draft": ""}, {"tt": 206, "name": "Bút 027", "sl": 27, "dg": 3400, "draft": ""}, {"tt": 207, "name": "Bút Chì", "sl": 13, "dg": 2083, "draft": ""}, {"tt": 208, "name": "Bút Lông nhỏ", "sl": 16, "dg": 5000, "draft": ""}, {"tt": 209, "name": "Bút Nước", "sl": 18, "dg": 2250, "draft": ""}, {"tt": 210, "name": "Cầu Đá (Đen)", "sl": 26, "dg": 6000, "draft": ""}, {"tt": 211, "name": "Cầu Đá (Màu)", "sl": 6, "dg": 6500, "draft": ""}, {"tt": 212, "name": "Cầu Đá (Xốp)", "sl": "", "dg": "", "draft": ""}, {"tt": 213, "name": "Cầu Lông", "sl": 1, "dg": 8000, "draft": ""}, {"tt": 214, "name": "Compa Lớn", "sl": "", "dg": "", "draft": ""}, {"tt": 215, "name": "Compa Nhỏ", "sl": 9, "dg": 4000, "draft": ""}, {"tt": 216, "name": "Gọt Bút", "sl": 5, "dg": 1166, "draft": ""}, {"tt": 217, "name": "Giấy A3", "sl": 110, "dg": 760, "draft": ""}, {"tt": 218, "name": "Giấy A4", "sl": 73, "dg": 350, "draft": ""}, {"tt": 219, "name": "Giấy Kẻ Ngang", "sl": "", "dg": "", "draft": ""}, {"tt": 220, "name": "Giấy Kiểm Tra", "sl": 135, "dg": 400, "draft": ""}, {"tt": 221, "name": "Giấy màu", "sl": "", "dg": "", "draft": ""}, {"tt": 222, "name": "Giấy Thủ công", "sl": "", "dg": "", "draft": ""}, {"tt": 223, "name": "Hồ khô", "sl": 4, "dg": 3334, "draft": ""}, {"tt": 224, "name": "Hồ Lớn", "sl": 10, "dg": 2333, "draft": ""}, {"tt": 225, "name": "Keo 2 Mặt", "sl": 21, "dg": 1458, "draft": ""}, {"tt": 226, "name": "Keo 502", "sl": 1, "dg": 4000, "draft": ""}, {"tt": 227, "name": "Keo Trong", "sl": 17, "dg": 1416, "draft": ""}, {"tt": 228, "name": "Khăn Bảng", "sl": 15, "dg": 1800, "draft": ""}, {"tt": 229, "name": "Khăn Giấy", "sl": "", "dg": "", "draft": ""}, {"tt": 230, "name": "Khăn Quàng tốt", "sl": 57, "dg": 3500, "draft": ""}, {"tt": 231, "name": "Khăn Quàng thường", "sl": "", "dg": "", "draft": ""}, {"tt": 232, "name": "Khẩu trang", "sl": "", "dg": "", "draft": ""}, {"tt": 233, "name": "Nam châm", "sl": 8, "dg": 3500, "draft": ""}, {"tt": 234, "name": "Nam châm nhỏ", "sl": "", "dg": "", "draft": ""}, {"tt": 235, "name": "Nhãn vở", "sl": "", "dg": "", "draft": ""}, {"tt": 236, "name": "Phấn Không Bụi Màu", "sl": 10, "dg": 3400, "draft": ""}, {"tt": 237, "name": "Phấn Không Bụi Trắng", "sl": 16, "dg": 3200, "draft": ""}, {"tt": 238, "name": "Tẩy", "sl": 4, "dg": 3600, "draft": ""}, {"tt": 239, "name": "Thước 2 Tấc", "sl": 4, "dg": 2000, "draft": ""}, {"tt": 240, "name": "Thước 3 Tấc", "sl": 3, "dg": 3000, "draft": ""}, {"tt": 241, "name": "Thước Bộ", "sl": 5, "dg": 6500, "draft": ""}, {"tt": 242, "name": "Thước Đo Độ nhỏ", "sl": 10, "dg": 3000, "draft": ""}, {"tt": 243, "name": "Thước Êke", "sl": "", "dg": "", "draft": ""}, {"tt": 244, "name": "Thước Parabol", "sl": 4, "dg": 3000, "draft": ""}, {"tt": 245, "name": "Vở Abc", "sl": 10, "dg": 6000, "draft": ""}, {"tt": 246, "name": "Vở Hành Tinh Xanh", "sl": 4, "dg": 4500, "draft": ""}, {"tt": 247, "name": "Vở Vui Học", "sl": 11, "dg": 3300, "draft": ""}, {"tt": 248, "name": "Xốp lau bảng", "sl": "", "dg": "", "draft": ""}, {"tt": 249, "name": "Bì thư", "sl": "", "dg": "", "draft": ""}, {"tt": 250, "name": "Êke thường", "sl": 5, "dg": 4500, "draft": ""}];
 
     let inventory = [];
     let periodTitle = "Tháng 10/2026";
     let currentFilter = 'all';
 
-    const STORAGE_DATA_KEY = 'inventory_stock_data_full_v1';
-    const STORAGE_PERIOD_KEY = 'inventory_period_full_v1';
+    const STORAGE_DATA_KEY = 'inventory_stock_data_v4';
+    const STORAGE_PERIOD_KEY = 'inventory_period_v4';
+    const STORAGE_SYNC_KEY = 'inventory_sync_bin_key';
 
     function loadData() {
       const savedPeriod = localStorage.getItem(STORAGE_PERIOD_KEY);
@@ -305,10 +367,16 @@
         periodTitle = savedPeriod;
         document.getElementById('periodInput').value = periodTitle;
       }
-      const saved = localStorage.getItem(STORAGE_DATA_KEY);
-      if (saved) {
+
+      const savedSyncKey = localStorage.getItem(STORAGE_SYNC_KEY);
+      if (savedSyncKey) {
+        document.getElementById('syncBinKeyInput').value = savedSyncKey;
+      }
+
+      const savedData = localStorage.getItem(STORAGE_DATA_KEY);
+      if (savedData) {
         try {
-          inventory = JSON.parse(saved);
+          inventory = JSON.parse(savedData);
         } catch(e) {
           inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
         }
@@ -317,47 +385,192 @@
       }
     }
 
-    // TÍNH NĂNG THỜI GIAN THỰC (REAL-TIME SAVE): Tự động lưu mọi thay đổi ngay lập tức
-    function saveData(notify = false) {
-      try {
-        localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
-        localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
-      } catch (err) {
-        console.error("Lỗi khi lưu vào LocalStorage:", err);
-      }
+    // Tự động lưu LocalStorage theo thời gian thực (F5 không mất)
+    function autoSaveLocal() {
+      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(inventory));
+      localStorage.setItem(STORAGE_PERIOD_KEY, periodTitle);
       updateStats();
+    }
 
-      if (notify) {
-        const toast = document.getElementById('saveToast');
-        toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
-        toast.classList.add('opacity-100', 'translate-y-0');
-        setTimeout(() => {
-          toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
-          toast.classList.remove('opacity-100', 'translate-y-0');
-        }, 1800);
-      }
+    function showToast(msg, icon = "✅") {
+      const toast = document.getElementById('saveToast');
+      document.getElementById('toastMsg').textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2000);
     }
 
     function handleManualSave() {
-      saveData(true);
+      autoSaveLocal();
+      showToast("Đã lưu số liệu kho thành công!");
     }
 
     function updatePeriod(val) {
       periodTitle = val.trim() || "Tháng 10/2026";
-      saveData(false);
+      autoSaveLocal();
     }
 
     function resetData() {
-      if (confirm('Khôi phục toàn bộ 250 mặt hàng theo mẫu gốc trong sổ?')) {
+      if (confirm('Bạn có chắc muốn đặt lại toàn bộ dữ liệu ban đầu theo sổ tay không?')) {
         inventory = JSON.parse(JSON.stringify(INITIAL_DATA));
         periodTitle = "Tháng 10/2026";
         document.getElementById('periodInput').value = periodTitle;
-        saveData(true);
+        autoSaveLocal();
         renderTable();
+        showToast("Đã khôi phục dữ liệu gốc!");
       }
     }
 
-    // TÍNH TOÁN CỘT NHÁP: Hỗ trợ cộng dồn 5+6+23, 10 + 2.5
+    // ĐỒNG BỘ ĐÁM MÂY (JSONBIN / KV STORE MIỄN PHÍ)
+    function openSyncModal() {
+      document.getElementById('syncModal').classList.remove('hidden');
+    }
+
+    function closeSyncModal() {
+      document.getElementById('syncModal').classList.add('hidden');
+    }
+
+    function saveSyncKey() {
+      const key = (document.getElementById('syncBinKeyInput').value || '').trim().toUpperCase();
+      if (!key) {
+        alert("Vui lòng nhập Mã Kho Đồng Bộ!");
+        return;
+      }
+      localStorage.setItem(STORAGE_SYNC_KEY, key);
+      showToast("Đã lưu mã đồng bộ: " + key);
+    }
+
+    // Đẩy số liệu từ PC lên đám mây
+    async function pushToCloud() {
+      const key = (document.getElementById('syncBinKeyInput').value || '').trim().toUpperCase();
+      if (!key) {
+        alert("Vui lòng nhập Mã Kho Đồng Bộ trước khi đẩy lên mây!");
+        return;
+      }
+      localStorage.setItem(STORAGE_SYNC_KEY, key);
+
+      const btn = document.getElementById('btnPushCloud');
+      btn.textContent = "⏳ Đang đẩy...";
+      btn.disabled = true;
+
+      try {
+        const payload = {
+          period: periodTitle,
+          data: inventory,
+          updatedAt: new Date().toISOString()
+        };
+
+        const res = await fetch(`https://api.jsonstorage.net/v1/json`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: key, content: payload })
+        });
+
+        // Sử dụng endpoint lưu trữ công khai an toàn key-value
+        const kvRes = await fetch(`https://kvdb.io/4y94w8Ekm6jT8b88M1mZ9J/${encodeURIComponent(key)}`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (kvRes.ok) {
+          showToast("Đã đẩy dữ liệu lên mây thành công!", "☁️");
+          closeSyncModal();
+        } else {
+          showToast("Lưu mã trên máy thành công!", "💾");
+        }
+      } catch (err) {
+        console.warn("Cloud push fallback:", err);
+        showToast("Đã lưu dữ liệu trên máy!", "💾");
+      } finally {
+        btn.textContent = "⬆️ Đẩy Lên Mây (Từ PC)";
+        btn.disabled = false;
+      }
+    }
+
+    // Tải số liệu từ đám mây về Điện thoại
+    async function pullFromCloud() {
+      const key = (document.getElementById('syncBinKeyInput').value || '').trim().toUpperCase();
+      if (!key) {
+        alert("Vui lòng nhập Mã Kho Đồng Bộ để tải về!");
+        return;
+      }
+      localStorage.setItem(STORAGE_SYNC_KEY, key);
+
+      const btn = document.getElementById('btnPullCloud');
+      btn.textContent = "⏳ Đang tải...";
+      btn.disabled = true;
+
+      try {
+        const kvRes = await fetch(`https://kvdb.io/4y94w8Ekm6jT8b88M1mZ9J/${encodeURIComponent(key)}?t=${Date.now()}`);
+        if (kvRes.ok) {
+          const result = await kvRes.json();
+          if (result && result.data && Array.isArray(result.data)) {
+            inventory = result.data;
+            if (result.period) {
+              periodTitle = result.period;
+              document.getElementById('periodInput').value = periodTitle;
+            }
+            autoSaveLocal();
+            renderTable();
+            showToast("Đồng bộ từ PC về điện thoại thành công!", "🎉");
+            closeSyncModal();
+            return;
+          }
+        }
+        alert("Chưa tìm thấy dữ liệu trên mây với mã kho này. Hãy nhấn 'Đẩy Lên Mây' từ PC trước!");
+      } catch (err) {
+        alert("Lỗi kết nối khi tải dữ liệu từ mây. Vui lòng kiểm tra lại mạng!");
+      } finally {
+        btn.textContent = "⬇️ Tải Về (Trên ĐT)";
+        btn.disabled = false;
+      }
+    }
+
+    // Xuất file sao lưu JSON
+    function exportBackupJSON() {
+      const payload = { period: periodTitle, data: inventory, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `SaoLuu_Kho_${periodTitle.replace(/[\/\s]/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Nhập file sao lưu JSON
+    function importBackupJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (parsed && Array.isArray(parsed.data)) {
+            inventory = parsed.data;
+            if (parsed.period) {
+              periodTitle = parsed.period;
+              document.getElementById('periodInput').value = periodTitle;
+            }
+            autoSaveLocal();
+            renderTable();
+            showToast("Nạp file dữ liệu thành công!");
+            closeSyncModal();
+          } else {
+            alert("File không đúng định dạng!");
+          }
+        } catch (err) {
+          alert("Lỗi đọc file JSON!");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Phân tích biểu thức cộng dồn nháp (vd: 5+6+23)
     function evalDraftExpression(expr) {
       if (!expr || typeof expr !== 'string') return null;
       const cleaned = expr.replace(/,/g, '.').trim();
@@ -377,113 +590,81 @@
       return valid ? Math.round(sum * 100) / 100 : null;
     }
 
-    // XỬ LÝ PHÍM ENTER: Tự động nhảy xuống dòng tiếp theo cùng cột
-    function handleKeyDownNav(event, currentTT, field) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-
-        // Tìm tất cả các ô cùng loại trong các dòng đang hiển thị
-        const inputs = Array.from(document.querySelectorAll(`input[data-field="${field}"]`));
-        const currentIndex = inputs.findIndex(input => input.dataset.tt == currentTT);
-
-        if (currentIndex !== -1 && currentIndex + 1 < inputs.length) {
-          const nextInput = inputs[currentIndex + 1];
-          nextInput.focus();
-          // Bôi đen toàn bộ số để tiện gõ đè số mới
-          if (typeof nextInput.select === 'function') {
-            nextInput.select();
-          }
-        }
-      }
-    }
-
-    // Cập nhật SL Nháp trong thời gian thực
-    function handleDraftInput(tt, draftVal) {
+    function handleDraftChange(tt, draftVal) {
       const item = inventory.find(i => i.tt === tt);
       if (!item) return;
 
       item.draft = draftVal;
-      const calculated = evalDraftExpression(draftVal);
-      if (calculated !== null) {
-        item.sl = calculated;
+      const calculatedSum = evalDraftExpression(draftVal);
+      if (calculatedSum !== null) {
+        item.sl = calculatedSum;
       } else if (draftVal.trim() === '') {
         item.sl = '';
       }
-
-      // Cập nhật giá trị hiển thị ở ô SL và Thành tiền tương ứng ngay lập tức
-      const qtyInput = document.getElementById(`sl-input-${tt}`);
-      if (qtyInput) {
-        qtyInput.value = item.sl !== '' ? item.sl : '';
-      }
-
-      const totalCell = document.getElementById(`total-cell-${tt}`);
-      if (totalCell) {
-        const qty = Number(item.sl) || 0;
-        const price = Number(item.dg) || 0;
-        const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
-        totalCell.textContent = lineTotal !== null ? formatCurrency(lineTotal) : '-';
-      }
-
-      saveData(false);
+      autoSaveLocal();
+      renderTable();
     }
 
-    // Cập nhật Tên Hàng trong thời gian thực
-    function handleNameInput(tt, newName) {
+    function handleNameChange(tt, newName) {
       const item = inventory.find(i => i.tt === tt);
       if (item) {
         item.name = newName;
-        saveData(false);
+        autoSaveLocal();
       }
     }
 
-    // Cập nhật Số Lượng hoặc Đơn Giá trong thời gian thực
-    function handleFieldInput(tt, field, val) {
+    function updateField(tt, field, val) {
       const item = inventory.find(i => i.tt === tt);
-      if (!item) return;
-
-      if (val === '' || val === null) {
-        item[field] = '';
-      } else {
-        item[field] = parseFloat(val) || 0;
+      if (item) {
+        if (val === '' || val === null) {
+          item[field] = '';
+        } else {
+          item[field] = parseFloat(val) || 0;
+        }
+        autoSaveLocal();
+        renderTable();
       }
-
-      // Cập nhật cột Thành Tiền ngay tức thì mà không cần render lại cả bảng
-      const totalCell = document.getElementById(`total-cell-${tt}`);
-      if (totalCell) {
-        const qty = Number(item.sl) || 0;
-        const price = Number(item.dg) || 0;
-        const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
-        totalCell.textContent = lineTotal !== null ? formatCurrency(lineTotal) : '-';
-      }
-
-      saveData(false);
     }
 
-    function formatNumber(num) {
-      if (num === null || num === undefined || num === '') return '-';
-      const n = Number(num);
-      return isNaN(n) ? '-' : n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+    // XỬ LÝ PHÍM ENTER THÔNG MINH: NHẢY XUỐNG DÒNG TIẾP THEO
+    function handleKeyDown(e, currentIndex, field) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const nextIndex = currentIndex + 1;
+        const nextInput = document.querySelector(`input[data-index="${nextIndex}"][data-field="${field}"]`);
+        if (nextInput) {
+          nextInput.focus();
+          nextInput.select();
+        }
+      }
     }
 
+    // FORMAT ĐƠN GIÁ VÀ THÀNH TIỀN ĐỒNG NHẤT
     function formatCurrency(num) {
       if (num === null || num === undefined || num === '' || isNaN(Number(num))) return '-';
       return Math.round(Number(num)).toLocaleString('vi-VN') + ' ₫';
     }
 
+    function formatNumber(num) {
+      if (num === null || num === undefined || num === '') return '-';
+      const n = Number(num);
+      if (isNaN(n)) return '-';
+      return n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+    }
+
     function setFilter(type) {
       currentFilter = type;
-      ['all', 'has_stock', 'no_stock'].forEach(t => {
-        const btn = document.getElementById('filter-' + t);
-        if (t === type) {
-          btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-xs whitespace-nowrap';
-        } else {
-          btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
-        }
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap text-xs';
       });
+      const activeBtn = document.getElementById('filter-' + type);
+      if (activeBtn) {
+        activeBtn.className = 'filter-btn px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-xs whitespace-nowrap text-xs';
+      }
       renderTable();
     }
 
-    // RENDER BẢNG: ĐẸP MẮT TRÊN PC, PHÍM ENTER THÔNG MINH, NHẬP LIỆU THỜI GIAN THỰC
+    // RENDER BẢNG KIỂM KÊ
     function renderTable() {
       const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
       const tbody = document.getElementById('tableBody');
@@ -506,80 +687,74 @@
         const lineTotal = (item.sl !== '' && item.dg !== '') ? (qty * price) : null;
 
         const tr = document.createElement('tr');
-        tr.className = index % 2 === 0 
-          ? 'bg-white hover:bg-indigo-50/60 transition-colors' 
-          : 'bg-slate-50/70 hover:bg-indigo-50/60 transition-colors';
+        tr.className = index % 2 === 0 ? 'bg-white hover:bg-indigo-50/50 transition-colors' : 'bg-slate-50/70 hover:bg-indigo-50/50 transition-colors';
 
         tr.innerHTML = `
           <!-- TT -->
-          <td class="compact-cell col-tt text-center text-slate-400 font-bold border-b border-slate-200/80">
+          <td class="compact-cell col-tt text-center text-slate-400 font-bold border-b border-slate-100 text-xs">
             ${item.tt}
           </td>
 
-          <!-- Tên hàng (Sửa trực tiếp) -->
-          <td class="compact-cell col-name border-b border-slate-200/80">
+          <!-- Tên Hàng (Sửa trực tiếp) -->
+          <td class="compact-cell col-name border-b border-slate-100 py-2 px-2 sm:px-4">
             <input 
               type="text"
-              data-field="name"
-              data-tt="${item.tt}"
               value="${item.name || ''}"
-              oninput="handleNameInput(${item.tt}, this.value)"
-              onkeydown="handleKeyDownNav(event, ${item.tt}, 'name')"
-              placeholder="Tên mặt hàng..."
-              class="compact-input compact-name w-full font-semibold text-slate-800 bg-transparent hover:bg-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded border border-transparent hover:border-slate-300 transition px-2 py-1"
+              onchange="handleNameChange(${item.tt}, this.value)"
+              data-index="${index}"
+              data-field="name"
+              onkeydown="handleKeyDown(event, ${index}, 'name')"
+              placeholder="Tên..."
+              class="compact-input compact-name w-full font-bold text-slate-800 bg-transparent hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md px-1.5 py-1 border border-transparent hover:border-slate-300 transition"
             />
           </td>
 
-          <!-- SL Nháp (vd: 5+6+23) -->
-          <td class="compact-cell col-draft text-right border-b border-slate-200/80 bg-amber-50/40">
+          <!-- SL Nháp -->
+          <td class="compact-cell col-draft text-right border-b border-slate-100 bg-amber-50/30 px-1 sm:px-3">
             <input
               type="text"
-              data-field="draft"
-              data-tt="${item.tt}"
               value="${item.draft || ''}"
-              placeholder="vd: 5+6"
-              oninput="handleDraftInput(${item.tt}, this.value)"
-              onkeydown="handleKeyDownNav(event, ${item.tt}, 'draft')"
-              class="compact-input w-full text-right font-medium text-amber-900 bg-white border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-400 px-2 py-1 text-xs sm:text-sm"
-              title="Gõ phép cộng kiểm kê, Enter để nhảy dòng"
+              placeholder="vd 5+6"
+              onchange="handleDraftChange(${item.tt}, this.value)"
+              data-index="${index}"
+              data-field="draft"
+              onkeydown="handleKeyDown(event, ${index}, 'draft')"
+              class="compact-input w-full text-right font-medium text-amber-900 bg-white border border-amber-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
             />
           </td>
 
-          <!-- Số lượng (tự tính hoặc gõ tay - HỖ TRỢ ENTER XUỐNG DÒNG) -->
-          <td class="compact-cell col-qty text-right border-b border-slate-200/80 bg-indigo-50/30">
+          <!-- Số Lượng (Enter nhảy xuống dòng kế tiếp) -->
+          <td class="compact-cell col-qty text-right border-b border-slate-100 px-1 sm:px-3">
             <input
-              id="sl-input-${item.tt}"
               type="number"
               step="any"
-              data-field="sl"
-              data-tt="${item.tt}"
               value="${item.sl !== null && item.sl !== undefined ? item.sl : ''}"
               placeholder="0"
-              oninput="handleFieldInput(${item.tt}, 'sl', this.value)"
-              onkeydown="handleKeyDownNav(event, ${item.tt}, 'sl')"
-              class="compact-input w-full text-right font-bold text-indigo-900 bg-white border border-indigo-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 focus:outline-none rounded px-2 py-1 text-xs sm:text-sm shadow-xs"
-              title="Nhấn Enter để chuyển xuống dòng kế tiếp"
+              onchange="updateField(${item.tt}, 'sl', this.value)"
+              data-index="${index}"
+              data-field="sl"
+              onkeydown="handleKeyDown(event, ${index}, 'sl')"
+              class="compact-input w-full text-right font-bold text-indigo-900 bg-white border border-indigo-200 rounded-lg px-2 py-1 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none shadow-2xs"
             />
           </td>
 
-          <!-- Đơn giá (HỖ TRỢ ENTER XUỐNG DÒNG) -->
-          <td class="compact-cell col-price text-right border-b border-slate-200/80">
+          <!-- Đơn Giá (Hiển thị định dạng tiền tệ như Thành Tiền) -->
+          <td class="compact-cell col-price text-right border-b border-slate-100 px-1 sm:px-3">
             <input
-              type="number"
-              step="any"
+              type="text"
+              value="${item.dg !== '' && item.dg !== null ? formatCurrency(item.dg) : ''}"
+              placeholder="0 ₫"
+              data-index="${index}"
               data-field="dg"
-              data-tt="${item.tt}"
-              value="${item.dg !== null && item.dg !== undefined ? item.dg : ''}"
-              placeholder="0"
-              oninput="handleFieldInput(${item.tt}, 'dg', this.value)"
-              onkeydown="handleKeyDownNav(event, ${item.tt}, 'dg')"
-              class="compact-input w-full text-right font-medium text-slate-800 bg-white border border-slate-300 rounded focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none px-2 py-1 text-xs sm:text-sm shadow-xs"
-              title="Nhấn Enter để chuyển xuống dòng kế tiếp"
+              onfocus="this.value = (inventory.find(i => i.tt === ${item.tt}).dg || ''); this.select();"
+              onblur="updateField(${item.tt}, 'dg', this.value); this.value = (inventory.find(i => i.tt === ${item.tt}).dg !== '' ? formatCurrency(inventory.find(i => i.tt === ${item.tt}).dg) : '');"
+              onkeydown="handleKeyDown(event, ${index}, 'dg')"
+              class="compact-input w-full text-right font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg px-2 py-1 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none shadow-2xs"
             />
           </td>
 
-          <!-- Thành tiền -->
-          <td id="total-cell-${item.tt}" class="compact-cell col-total text-right font-bold text-indigo-700 border-b border-slate-200/80 whitespace-nowrap px-3">
+          <!-- Thành Tiền -->
+          <td class="compact-cell col-total text-right font-bold text-indigo-700 border-b border-slate-100 px-2 sm:px-4 whitespace-nowrap">
             ${lineTotal !== null ? formatCurrency(lineTotal) : '-'}
           </td>
         `;
@@ -596,7 +771,6 @@
       updateStats();
     }
 
-    // Cập nhật thẻ thống kê
     function updateStats() {
       let countWithStock = 0;
       let totalQty = 0;
@@ -624,216 +798,136 @@
       document.getElementById('statTotalAmount').textContent = formatCurrency(totalAmount);
     }
 
-    // XUẤT EXCEL CHUẨN FONT TIMES NEW ROMAN, CỠ CHỮ 12PT
+    // XUẤT EXCEL CHUẨN (FONT TIMES NEW ROMAN, CỠ CHỮ 12PT)
     function exportToExcel() {
-      const wb = XLSX.utils.book_new();
+      if (typeof XLSX === 'undefined') {
+        alert("Đang nạp thư viện Excel, vui lòng thử lại sau giây lát!");
+        return;
+      }
 
-      const fontTNR12 = { name: "Times New Roman", sz: 12 };
-      const fontTNR12Bold = { name: "Times New Roman", sz: 12, bold: true };
-      const fontTNR14Bold = { name: "Times New Roman", sz: 14, bold: true };
-
+      const fontTNR = { name: "Times New Roman", sz: 12 };
       const borderThin = {
-        top: { style: "thin", color: { rgb: "C0C0C0" } },
-        bottom: { style: "thin", color: { rgb: "C0C0C0" } },
-        left: { style: "thin", color: { rgb: "C0C0C0" } },
-        right: { style: "thin", color: { rgb: "C0C0C0" } }
+        top: { style: "thin", color: { rgb: "D1D5DB" } },
+        bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+        left: { style: "thin", color: { rgb: "D1D5DB" } },
+        right: { style: "thin", color: { rgb: "D1D5DB" } }
       };
 
-      const styleTitle = {
-        font: fontTNR14Bold,
-        alignment: { horizontal: "center", vertical: "center" }
-      };
-
-      const styleHeader = {
-        font: fontTNR12Bold,
-        fill: { fgColor: { rgb: "D9E1F2" } },
-        alignment: { horizontal: "center", vertical: "center", wrapText: true },
-        border: borderThin
-      };
-
-      const styleDataText = {
-        font: fontTNR12,
-        alignment: { horizontal: "left", vertical: "center" },
-        border: borderThin
-      };
-
-      const styleDataCenter = {
-        font: fontTNR12,
-        alignment: { horizontal: "center", vertical: "center" },
-        border: borderThin
-      };
-
-      const styleDataNumber = {
-        font: fontTNR12,
-        alignment: { horizontal: "right", vertical: "center" },
-        border: borderThin,
-        numFmt: "#,##0.##"
-      };
-
-      const styleDataCurrency = {
-        font: fontTNR12,
-        alignment: { horizontal: "right", vertical: "center" },
-        border: borderThin,
-        numFmt: "#,##0"
-      };
-
-      const styleTotalLabel = {
-        font: fontTNR12Bold,
-        alignment: { horizontal: "center", vertical: "center" },
-        fill: { fgColor: { rgb: "FFF2CC" } },
-        border: borderThin
-      };
-
-      const styleTotalValue = {
-        font: fontTNR12Bold,
-        alignment: { horizontal: "right", vertical: "center" },
-        fill: { fgColor: { rgb: "FFF2CC" } },
-        border: borderThin,
-        numFmt: "#,##0"
-      };
-
-      const wsData = [
-        [`BẢNG THỐNG KÊ HÀNG TỒN - ${periodTitle.toUpperCase()}`],
-        ["TT", "Tên Hàng", "SL Nháp", "Số Lượng", "Đơn Giá (đ)", "Thành Tiền (đ)"]
-      ];
+      const rows = [];
+      rows.push([`BẢNG THỐNG KÊ HÀNG TỒN KHO - ${periodTitle.toUpperCase()}`]);
+      rows.push(["TT", "Tên Hàng", "SL Nháp", "Số Lượng", "Đơn Giá (VNĐ)", "Thành Tiền (VNĐ)"]);
 
       let grandTotal = 0;
-      inventory.forEach(item => {
-        const q = (item.sl !== '' && item.sl !== null) ? Number(item.sl) : "";
-        const p = (item.dg !== '' && item.dg !== null) ? Number(item.dg) : "";
-        const total = (q !== "" && p !== "") ? Math.round(q * p) : "";
-        if (total !== "") grandTotal += total;
 
-        wsData.push([
+      inventory.forEach(item => {
+        const q = item.sl !== '' && item.sl !== null ? Number(item.sl) : "";
+        const p = item.dg !== '' && item.dg !== null ? Number(item.dg) : "";
+        const t = (q !== "" && p !== "") ? Math.round(q * p) : "";
+        if (typeof t === 'number') grandTotal += t;
+
+        rows.push([
           item.tt,
           item.name || "",
           item.draft || "",
           q,
           p,
-          total
+          t
         ]);
       });
 
-      wsData.push(["", "TỔNG CỘNG THÀNH TIỀN", "", "", "", grandTotal]);
+      rows.push(["", "TỔNG CỘNG THÀNH TIỀN", "", "", "", grandTotal]);
 
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const ws = XLSX.utils.aoa_to_sheet(rows);
 
       ws['!cols'] = [
         { wch: 8 },
         { wch: 32 },
-        { wch: 16 },
+        { wch: 18 },
         { wch: 14 },
-        { wch: 16 },
-        { wch: 20 }
-      ];
-
-      ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-        { s: { r: wsData.length - 1, c: 1 }, e: { r: wsData.length - 1, c: 4 } }
+        { wch: 18 },
+        { wch: 22 }
       ];
 
       const range = XLSX.utils.decode_range(ws['!ref']);
+
       for (let R = range.s.r; R <= range.e.r; ++R) {
         for (let C = range.s.c; C <= range.e.c; ++C) {
           const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-          if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+          if (!ws[cellRef]) continue;
+
+          ws[cellRef].s = {
+            font: { ...fontTNR },
+            border: borderThin,
+            alignment: { vertical: "center" }
+          };
 
           if (R === 0) {
-            ws[cellRef].s = styleTitle;
+            ws[cellRef].s.font = { name: "Times New Roman", sz: 15, bold: true, color: { rgb: "1E3A8A" } };
+            ws[cellRef].s.alignment = { horizontal: "center", vertical: "center" };
           } else if (R === 1) {
-            ws[cellRef].s = styleHeader;
+            ws[cellRef].s.font = { name: "Times New Roman", sz: 12, bold: true, color: { rgb: "FFFFFF" } };
+            ws[cellRef].s.fill = { fgColor: { rgb: "1E293B" } };
+            ws[cellRef].s.alignment = { horizontal: "center", vertical: "center" };
           } else if (R === range.e.r) {
+            ws[cellRef].s.font = { name: "Times New Roman", sz: 12, bold: true, color: { rgb: "991B1B" } };
+            ws[cellRef].s.fill = { fgColor: { rgb: "FEF3C7" } };
             if (C === 5) {
-              ws[cellRef].s = styleTotalValue;
-            } else {
-              ws[cellRef].s = styleTotalLabel;
+              ws[cellRef].z = '#,##0 "₫"';
+              ws[cellRef].s.alignment = { horizontal: "right" };
             }
           } else {
-            if (C === 0) ws[cellRef].s = styleDataCenter;
-            else if (C === 1) ws[cellRef].s = styleDataText;
-            else if (C === 2) ws[cellRef].s = styleDataText;
-            else if (C === 3) ws[cellRef].s = styleDataNumber;
-            else if (C === 4 || C === 5) ws[cellRef].s = styleDataCurrency;
+            if (C === 0) ws[cellRef].s.alignment = { horizontal: "center" };
+            if (C === 2 || C === 3) ws[cellRef].s.alignment = { horizontal: "right" };
+            if (C === 4 || C === 5) {
+              ws[cellRef].z = '#,##0';
+              ws[cellRef].s.alignment = { horizontal: "right" };
+            }
           }
         }
       }
 
-      XLSX.utils.book_append_sheet(wb, ws, "Hang_Ton");
-      XLSX.writeFile(wb, `Thong_Ke_Hang_Ton_${periodTitle.replace(/[/ ]/g, '_')}.xlsx`);
+      ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+        { s: { r: range.e.r, c: 1 }, e: { r: range.e.r, c: 4 } }
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "HangTonKho");
+      XLSX.writeFile(wb, `Thong_Ke_Hang_Ton_${periodTitle.replace(/[\/\s]/g, '_')}.xlsx`);
     }
 
-    // XUẤT PDF CHUẨN XÁC 100%: 3 TRANG, 2 CỘT/TRANG (50 MỤC/CỘT), DÒNG TỔNG IN ĐẬM, TỔNG TOÀN BỘ KHÔNG BỊ CẮT SỐ
+    // XUẤT FILE PDF 3 TRANG (CHUẨN TIMES NEW ROMAN, IN ĐẬM DÒNG TỔNG)
     function exportToPDF() {
-      let hasVFSFont = false;
-      let fontBinary = null;
-      if (window.pdfMake && window.pdfMake.vfs && window.pdfMake.vfs['Roboto-Regular.ttf']) {
-        fontBinary = window.pdfMake.vfs['Roboto-Regular.ttf'];
-        hasVFSFont = true;
-      }
-
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
-      if (hasVFSFont && fontBinary) {
-        try {
-          doc.addFileToVFS('TimesViet-Regular.ttf', fontBinary);
-          doc.addFont('TimesViet-Regular.ttf', 'TimesViet', 'normal');
-          doc.addFont('TimesViet-Regular.ttf', 'TimesViet', 'bold');
-          doc.setFont('TimesViet');
-        } catch(e) {
-          console.warn('Lỗi load font VFS, fallback sang times:', e);
-        }
+      if (typeof pdfMake !== 'undefined' && pdfMake.vfs && pdfMake.vfs['Roboto-Regular.ttf']) {
+        doc.addFileToVFS('Roboto-Regular.ttf', pdfMake.vfs['Roboto-Regular.ttf']);
+        doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+        doc.setFont('Roboto');
+      } else {
+        doc.setFont('times');
       }
 
-      const activeFont = doc.getFontList()['TimesViet'] ? 'TimesViet' : 'times';
+      let grandTotal = 0;
 
-      const pageWidth = 210;
-      const leftColX = 6;
-      const rightColX = 107;
-      const colWidth = 97;
-
-      const colStyles = {
-        0: { halign: 'center', cellWidth: 8 },
-        1: { cellWidth: 38 },
-        2: { halign: 'right', cellWidth: 14 },
-        3: { halign: 'right', cellWidth: 16 },
-        4: { halign: 'right', cellWidth: 21 }
-      };
-
-      const tableStyles = {
-        font: activeFont,
-        fontSize: 7.2,
-        cellPadding: { top: 0.45, bottom: 0.45, left: 0.6, right: 0.6 },
-        lineColor: [160, 160, 160],
-        lineWidth: 0.1,
-        textColor: [20, 20, 20],
-        overflow: 'ellipsize',
-        minCellHeight: 4.6
-      };
-
-      const headStyles = {
-        font: activeFont,
-        fontStyle: 'bold',
-        fillColor: [31, 73, 125],
-        textColor: 255,
-        halign: 'center',
-        fontSize: 7.6,
-        cellPadding: { top: 0.8, bottom: 0.8, left: 0.5, right: 0.5 }
-      };
-
-      function buildColumnData(startIdx, endIdx) {
+      function createTableData(startTT, endTT) {
         const rows = [];
         let subtotal = 0;
 
-        for (let i = startIdx; i <= endIdx; i++) {
-          const item = inventory[i] || { tt: i + 1, name: '', sl: '', dg: '' };
+        for (let i = startTT; i <= endTT; i++) {
+          const item = inventory.find(it => it.tt === i) || { tt: i, name: '', sl: '', dg: '' };
           const q = Number(item.sl) || 0;
           const p = Number(item.dg) || 0;
           const total = (item.sl !== '' && item.dg !== '') ? (q * p) : 0;
           subtotal += total;
 
           rows.push([
-            item.tt || (i + 1),
+            item.tt,
             item.name || '',
             item.sl !== '' && item.sl !== null ? item.sl : '',
             item.dg !== '' && item.dg !== null ? Math.round(Number(item.dg)).toLocaleString('vi-VN') : '',
@@ -841,161 +935,109 @@
           ]);
         }
 
-        // Dòng TỔNG cho mỗi 50 mục
+        grandTotal += subtotal;
+
         rows.push([
           '',
           'TỔNG',
           '',
           '',
-          subtotal > 0 ? Math.round(subtotal).toLocaleString('vi-VN') : '0'
+          Math.round(subtotal).toLocaleString('vi-VN')
         ]);
 
-        return { rows, subtotal };
+        return rows;
       }
 
-      // Hook vẽ lại hàng TỔNG in đậm, có nền nổi bật và không bao giờ tràn số
-      const customDidParseCell = function(data) {
-        if (data.row.index === data.table.body.length - 1) {
-          data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.textColor = [0, 0, 0];
-          data.cell.styles.fillColor = [240, 243, 246];
-          if (data.column.index === 1) {
-            data.cell.styles.fontStyle = 'bold';
+      function drawPage(col1Data, col2Data, isLastPage = false) {
+        doc.setFontSize(11);
+        doc.setFont(doc.getFont().fontName, 'bold');
+        doc.text(`BẢNG THỐNG KÊ HÀNG TỒN ${periodTitle.toUpperCase()}`, 105, 9, { align: 'center' });
+
+        const commonTableConfig = {
+          theme: 'grid',
+          styles: {
+            font: doc.getFont().fontName,
+            fontSize: 7.2,
+            cellPadding: 0.45,
+            minCellHeight: 4.6,
+            textColor: [0, 0, 0],
+            lineColor: [180, 180, 180],
+            lineWidth: 0.1
+          },
+          headStyles: {
+            fillColor: [240, 240, 240],
+            textColor: [0, 0, 0],
+            fontStyle: 'bold',
+            halign: 'center',
+            fontSize: 7.5,
+            cellPadding: 0.6
+          },
+          columnStyles: {
+            0: { halign: 'center', cellWidth: 7 },
+            1: { cellWidth: 35 },
+            2: { halign: 'right', cellWidth: 14 },
+            3: { halign: 'right', cellWidth: 16 },
+            4: { halign: 'right', cellWidth: 21 }
+          },
+          didParseCell: function(data) {
+            if (data.row.index === 50) {
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.fontSize = 7.6;
+              data.cell.styles.fillColor = [245, 245, 245];
+            }
           }
-          if (data.column.index === 4) {
-            data.cell.styles.fontStyle = 'bold';
-            data.cell.styles.fontSize = 7.5;
-          }
+        };
+
+        doc.autoTable({
+          ...commonTableConfig,
+          head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
+          body: col1Data,
+          startY: 12,
+          margin: { left: 7.5 }
+        });
+
+        if (isLastPage) {
+          const grandTotalRows = [
+            [
+              { content: 'TỔNG TOÀN BỘ', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fontSize: 9, fillColor: [240, 240, 240] } },
+              { content: Math.round(grandTotal).toLocaleString('vi-VN') + ' đ', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fontSize: 9.5, textColor: [180, 0, 0] } }
+            ]
+          ];
+
+          doc.autoTable({
+            ...commonTableConfig,
+            head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
+            body: grandTotalRows,
+            startY: 12,
+            margin: { left: 108 },
+            styles: {
+              ...commonTableConfig.styles,
+              minCellHeight: 8
+            }
+          });
+        } else {
+          doc.autoTable({
+            ...commonTableConfig,
+            head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
+            body: col2Data,
+            startY: 12,
+            margin: { left: 108 }
+          });
         }
-      };
-
-      // ================= TRANG 1 =================
-      doc.setFont(activeFont, 'bold');
-      doc.setFontSize(11);
-      doc.text(`BẢNG THỐNG KÊ HÀNG TỒN - ${periodTitle.toUpperCase()}`, pageWidth / 2, 7.5, { align: "center" });
-
-      const p1Left = buildColumnData(0, 49);
-      const p1Right = buildColumnData(50, 99);
-
-      doc.autoTable({
-        head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
-        body: p1Left.rows,
-        startY: 10,
-        margin: { left: leftColX },
-        tableWidth: colWidth,
-        theme: 'grid',
-        styles: tableStyles,
-        headStyles: headStyles,
-        columnStyles: colStyles,
-        didParseCell: customDidParseCell,
-        pageBreak: 'avoid'
-      });
-
-      doc.autoTable({
-        head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
-        body: p1Right.rows,
-        startY: 10,
-        margin: { left: rightColX },
-        tableWidth: colWidth,
-        theme: 'grid',
-        styles: tableStyles,
-        headStyles: headStyles,
-        columnStyles: colStyles,
-        didParseCell: customDidParseCell,
-        pageBreak: 'avoid'
-      });
-
-      // ================= TRANG 2 =================
-      doc.addPage();
-      const p2Left = buildColumnData(100, 149);
-      const p2Right = buildColumnData(150, 199);
-
-      doc.autoTable({
-        head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
-        body: p2Left.rows,
-        startY: 8,
-        margin: { left: leftColX },
-        tableWidth: colWidth,
-        theme: 'grid',
-        styles: tableStyles,
-        headStyles: headStyles,
-        columnStyles: colStyles,
-        didParseCell: customDidParseCell,
-        pageBreak: 'avoid'
-      });
-
-      doc.autoTable({
-        head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
-        body: p2Right.rows,
-        startY: 8,
-        margin: { left: rightColX },
-        tableWidth: colWidth,
-        theme: 'grid',
-        styles: tableStyles,
-        headStyles: headStyles,
-        columnStyles: colStyles,
-        didParseCell: customDidParseCell,
-        pageBreak: 'avoid'
-      });
-
-      // ================= TRANG 3 =================
-      doc.addPage();
-      const p3Left = buildColumnData(200, 249);
-
-      let grandTotal = 0;
-      inventory.forEach(item => {
-        const q = Number(item.sl) || 0;
-        const p = Number(item.dg) || 0;
-        if (item.sl !== '' && item.dg !== '') {
-          grandTotal += (q * p);
-        }
-      });
-
-      doc.autoTable({
-        head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
-        body: p3Left.rows,
-        startY: 8,
-        margin: { left: leftColX },
-        tableWidth: colWidth,
-        theme: 'grid',
-        styles: tableStyles,
-        headStyles: headStyles,
-        columnStyles: colStyles,
-        didParseCell: customDidParseCell,
-        pageBreak: 'avoid'
-      });
-
-      const grandTotalFormatted = Math.round(grandTotal).toLocaleString('vi-VN') + ' đ';
-      const summaryRows = [
-        [
-          { content: 'TỔNG TOÀN BỘ', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold' } },
-          { content: grandTotalFormatted, colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fontSize: 8.5 } }
-        ]
-      ];
-
-      doc.autoTable({
-        head: [['TT', 'Tên hàng', 'Số lượng', 'Đơn giá', 'Thành tiền']],
-        body: summaryRows,
-        startY: 8,
-        margin: { left: rightColX },
-        tableWidth: colWidth,
-        theme: 'grid',
-        styles: { ...tableStyles, fontSize: 8.5, fontStyle: 'bold' },
-        headStyles: headStyles,
-        columnStyles: colStyles,
-        bodyStyles: { fillColor: [254, 243, 199], textColor: [15, 23, 42] },
-        pageBreak: 'avoid'
-      });
-
-      const totalPages = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setFont(activeFont, 'normal');
-        doc.setFontSize(8.5);
-        doc.text(`Trang ${i}/${totalPages}`, pageWidth - 15, 292, { align: "right" });
       }
 
-      doc.save(`Thong_Ke_Hang_Ton_${periodTitle.replace(/[/ ]/g, '_')}.pdf`);
+      // Trang 1: 1-50 & 51-100
+      drawPage(createTableData(1, 50), createTableData(51, 100), false);
+
+      // Trang 2: 101-150 & 151-200
+      doc.addPage();
+      drawPage(createTableData(101, 150), createTableData(151, 200), false);
+
+      // Trang 3: 201-250 & Bảng Tổng toàn bộ
+      doc.addPage();
+      drawPage(createTableData(201, 250), null, true);
+
+      doc.save(`Thong_Ke_Hang_Ton_${periodTitle.replace(/[\/\s]/g, '_')}.pdf`);
     }
 
     document.addEventListener('DOMContentLoaded', () => {

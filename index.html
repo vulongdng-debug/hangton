@@ -673,7 +673,7 @@
       }
       if (!isAuto) showToast("Đang tải dữ liệu từ Cloud...", "⏳");
       try {
-        const res = await fetch(`https://jsonblob.com/api/jsonBlob/${currentBinId}`, {
+        const res = await fetch(`https://api.npoint.io/${currentBinId}`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' }
         });
@@ -717,16 +717,16 @@
 
       try {
         if (!currentBinId) {
-          // Tạo kho dữ liệu mới
-          const res = await fetch(`https://jsonblob.com/api/jsonBlob`, {
+          // Tạo kho dữ liệu mới trên nPoint
+          const res = await fetch(`https://api.npoint.io/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(payload)
           });
           if (res.ok) {
-            const loc = res.headers.get('Location');
-            if (loc) {
-              currentBinId = loc.split('/').pop();
+            const data = await res.json();
+            if (data && data.id) {
+              currentBinId = data.id;
               localStorage.setItem(STORAGE_SYNC_BIN_ID, currentBinId);
               const syncInput = document.getElementById('syncBinKeyInput');
               if (syncInput) syncInput.value = currentBinId;
@@ -736,16 +736,16 @@
             }
           }
         } else {
-          // Ghi đè cập nhật kho cũ
-          const res = await fetch(`https://jsonblob.com/api/jsonBlob/${currentBinId}`, {
-            method: 'PUT',
+          // Ghi đè cập nhật kho cũ trên nPoint
+          const res = await fetch(`https://api.npoint.io/${currentBinId}`, {
+            method: 'POST', // nPoint dùng POST để cập nhật
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(payload)
           });
           if (res.ok) {
             showToast("Đã cập nhật lên Cloud thành công!", "☁️");
             return;
-          } else if (res.status === 404) {
+          } else if (res.status === 404 || res.status === 400) {
             currentBinId = ''; // Xóa mã cũ hỏng, tự tạo mã mới
             handleManualSave(); 
             return;

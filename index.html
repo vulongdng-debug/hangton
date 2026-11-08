@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-  <title>Bản Xem Trước Điện Thoại - Kiểm Kê Kho Online</title>
+  <title>Hệ Thống Kiểm Kê Hàng Tồn Kho Online</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- jsPDF & autoTable CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <!-- Font Times New Roman Unicode hỗ trợ tiếng Việt có dấu 100% -->
+  <!-- Font Unicode tiếng Việt cho jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
   <!-- SheetJS (xlsx-js-style) CDN để xuất file XLSX chuẩn với font Times New Roman và cỡ chữ 12pt -->
@@ -19,81 +19,9 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       -webkit-tap-highlight-color: transparent;
-      user-select: text;
     }
 
-    /* Giả lập khung viền điện thoại chuẩn tỷ lệ iPhone / Flagship Android */
-    .phone-mockup {
-      width: 395px;
-      height: 812px;
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 0 12px #1e293b, 0 0 0 14px #475569;
-      border-radius: 46px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      background: #f8fafc;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Xoay ngang */
-    .phone-mockup.landscape {
-      width: 780px;
-      height: 410px;
-      border-radius: 36px;
-    }
-
-    /* Tràn viền màn hình thật nếu người dùng mở trực tiếp trên smartphone */
-    @media (max-width: 640px) {
-      .preview-wrapper {
-        padding: 0 !important;
-        background: transparent !important;
-      }
-      .phone-mockup {
-        width: 100% !important;
-        height: 100vh !important;
-        max-height: none !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        border: none !important;
-      }
-      .phone-notch, .desktop-only-controls {
-        display: none !important;
-      }
-    }
-
-    /* Notch tai thỏ / Dynamic Island giả lập */
-    .phone-notch {
-      width: 120px;
-      height: 22px;
-      background: #0f172a;
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      border-bottom-left-radius: 14px;
-      border-bottom-right-radius: 14px;
-      z-index: 60;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    .phone-notch-camera {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #1e293b;
-      border: 1px solid #334155;
-    }
-    .phone-notch-speaker {
-      width: 36px;
-      height: 4px;
-      border-radius: 4px;
-      background: #1e293b;
-    }
-
-    /* Ẩn spinner của input number */
+    /* Ẩn spinner mũi tên của input number */
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
       -webkit-appearance: none; 
@@ -103,228 +31,229 @@
       -moz-appearance: textfield;
     }
 
-    /* Khung cuộn bảng bên trong điện thoại */
-    .phone-scroll-area {
+    /* Khung bảng có thanh cuộn & Ghim tiêu đề sticky */
+    .table-container {
+      max-height: 70vh;
       overflow-y: auto;
-      overflow-x: hidden;
+      overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      flex: 1;
     }
 
-    /* Ghim cố định tiêu đề thead khi cuộn dọc */
-    .sticky-table-header th {
+    .sticky-header th {
       position: sticky;
       top: 0;
       z-index: 15;
       background-color: #1e293b; /* slate-800 */
     }
 
-    /* Tối ưu ô bảng tính siêu khít cho mobile */
-    .col-tt { width: 28px; min-width: 28px; max-width: 28px; text-align: center; }
-    .col-name { min-width: 110px; }
-    .col-draft { width: 72px; min-width: 72px; }
-    .col-qty { width: 52px; min-width: 52px; }
-    .col-price { width: 66px; min-width: 66px; }
-    .col-total { width: 70px; min-width: 70px; }
+    /* Kích thước chữ và khoảng cách ô vừa khít màn hình dọc điện thoại */
+    @media (max-width: 640px) {
+      .compact-cell {
+        padding: 5px 3px !important;
+        font-size: 11px !important;
+      }
+      .compact-input {
+        font-size: 11.5px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        padding: 2px 4px !important;
+      }
+      .compact-name {
+        font-size: 12px !important;
+        line-height: 1.25 !important;
+      }
+      .col-tt {
+        width: 28px !important;
+        min-width: 28px !important;
+        max-width: 28px !important;
+      }
+      .col-name {
+        min-width: 105px !important;
+      }
+      .col-draft {
+        width: 72px !important;
+        min-width: 72px !important;
+      }
+      .col-qty {
+        width: 52px !important;
+        min-width: 52px !important;
+      }
+      .col-price {
+        width: 65px !important;
+        min-width: 65px !important;
+      }
+      .col-total {
+        width: 70px !important;
+        min-width: 70px !important;
+      }
+    }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; padding: 0 !important; }
+      .table-container { max-height: none !important; overflow: visible !important; }
+      .sticky-header th { position: static !important; }
+    }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center">
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col pb-16">
 
-  <!-- THANH ĐIỀU KHIỂN XEM TRƯỚC (DESKTOP CONTROLS) -->
-  <div class="desktop-only-controls fixed top-3 z-50 bg-slate-800/90 backdrop-blur-md border border-slate-700 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-3 text-xs sm:text-sm">
-    <div class="flex items-center gap-1.5 font-bold text-slate-300">
-      <span>📱</span>
-      <span>Mô phỏng Điện Thoại:</span>
-    </div>
-
-    <!-- Nút xoay dọc / ngang -->
-    <button onclick="toggleOrientation()" id="orientBtn" class="bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-slate-200 font-medium flex items-center gap-1 transition">
-      <span>🔄</span> <span id="orientText">Màn hình dọc</span>
-    </button>
-
-    <!-- Nút Phóng to / Thu nhỏ scale -->
-    <div class="flex items-center gap-1 bg-slate-900/60 p-1 rounded-lg">
-      <button onclick="changeScale(-0.05)" class="px-2 py-0.5 rounded hover:bg-slate-700 font-mono font-bold">-</button>
-      <span id="scaleLabel" class="px-1.5 text-xs text-indigo-300 font-mono">100%</span>
-      <button onclick="changeScale(0.05)" class="px-2 py-0.5 rounded hover:bg-slate-700 font-mono font-bold">+</button>
-    </div>
-
-    <!-- Khôi phục dữ liệu gốc -->
-    <button onclick="resetData()" class="bg-rose-900/60 hover:bg-rose-800 text-rose-200 px-2.5 py-1.5 rounded-lg transition" title="Đặt lại 250 mặt hàng gốc từ sổ">
-      Khôi phục gốc
-    </button>
+  <!-- Toast Thông báo Lưu -->
+  <div id="saveToast" class="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl shadow-xl flex items-center gap-2 text-xs sm:text-sm transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-4">
+    <span>✅</span>
+    <span>Đã lưu số liệu kho thành công!</span>
   </div>
 
-  <!-- CONTAINER BỌC MOCKUP -->
-  <div class="preview-wrapper w-full flex items-center justify-center p-4 py-16 sm:py-20">
-    
-    <!-- KHUNG ĐIỆN THOẠI THẬT (MOCKUP FRAME) -->
-    <div class="phone-mockup shadow-2xl" id="phoneContainer">
-      
-      <!-- Notch tai thỏ -->
-      <div class="phone-notch">
-        <div class="phone-notch-speaker"></div>
-        <div class="phone-notch-camera"></div>
-      </div>
-
-      <!-- THANH TRẠNG THÁI STATUS BAR ĐIỆN THOẠI -->
-      <div class="bg-indigo-950 text-white pt-6 pb-1 px-5 flex items-center justify-between text-[11px] font-semibold tracking-wide select-none">
-        <span id="clockDisplay">09:41</span>
-        <div class="flex items-center gap-1.5 text-[10px]">
-          <span>📶 5G</span>
-          <span>100% 🔋</span>
-        </div>
-      </div>
-
-      <!-- HEADER ỨNG DỤNG KIỂM KÊ -->
-      <header class="bg-indigo-900 text-white px-2.5 py-2 shadow-md z-30 flex items-center justify-between gap-1 border-b border-indigo-800">
+  <!-- Header Thanh tác vụ chính -->
+  <header class="bg-indigo-900 text-white sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-4 py-2 sm:py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="text-xl sm:text-2xl">📦</span>
         <div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-base">📦</span>
-            <span class="font-extrabold text-sm tracking-tight">Kiểm Kê Kho</span>
-          </div>
-          <!-- Ô sửa tháng trực tiếp -->
-          <div class="flex items-center gap-1 mt-0.5">
-            <span class="text-indigo-300 text-[10px]">Kỳ:</span>
+          <h1 class="text-sm sm:text-lg font-bold tracking-tight leading-tight">Kiểm Kê Kho Online</h1>
+          <div class="flex items-center gap-1">
+            <span class="text-indigo-200 text-[11px] sm:text-xs">Kỳ:</span>
             <input 
               type="text" 
               id="periodInput" 
               value="Tháng 10/2026"
               onchange="updatePeriod(this.value)"
-              class="bg-indigo-950 text-amber-300 font-bold px-1 py-0.2 rounded border border-indigo-500/50 text-[10px] w-24 focus:outline-none"
-              title="Bấm để sửa tháng kiểm kê"
+              class="bg-indigo-950/80 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-indigo-400/40 text-[11px] sm:text-xs focus:outline-none w-28 sm:w-36"
+              title="Bấm để sửa tháng/năm kiểm kê"
             />
           </div>
         </div>
-
-        <!-- Cụm nút thao tác trên điện thoại -->
-        <div class="flex items-center gap-1">
-          <!-- NÚT LƯU NỔI BẬT -->
-          <button onclick="handleManualSave()" class="bg-amber-400 hover:bg-amber-500 active:scale-90 text-slate-950 font-black px-2 py-1 rounded-lg text-[11px] shadow flex items-center gap-0.5 transition">
-            💾 <span>Lưu</span>
-          </button>
-          <!-- Nút Xuất Excel -->
-          <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-90 text-white font-bold px-2 py-1 rounded-lg text-[11px] shadow transition" title="Tải file Excel .csv">
-            📊
-          </button>
-          <!-- Nút Xuất PDF -->
-          <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-700 active:scale-90 text-white font-bold px-2 py-1 rounded-lg text-[11px] shadow transition" title="Tải file PDF phiếu kiểm kê">
-            📄
-          </button>
-        </div>
-      </header>
-
-      <!-- THANH TÌM KIẾM & BỘ LỌC DÍNH (STICKY) -->
-      <div class="bg-white px-2 py-1.5 border-b border-slate-200 z-20 shadow-xs">
-        <div class="flex items-center gap-1.5 mb-1.5">
-          <div class="relative flex-1">
-            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-            <input
-              type="text"
-              id="searchInput"
-              placeholder="Tìm tên hàng hoặc STT..."
-              oninput="renderTable()"
-              class="w-full pl-7 pr-2 py-1 bg-slate-100 text-slate-800 text-[11.5px] rounded-lg border border-slate-300 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
-            />
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between text-[10.5px]">
-          <div class="flex items-center gap-1">
-            <button onclick="setFilter('all')" id="filter-all" class="px-2 py-0.5 rounded-md font-bold bg-indigo-600 text-white">Tất cả (250)</button>
-            <button onclick="setFilter('has_stock')" id="filter-has_stock" class="px-2 py-0.5 rounded-md font-medium bg-slate-100 text-slate-700">Có SL</button>
-            <button onclick="setFilter('no_stock')" id="filter-no_stock" class="px-2 py-0.5 rounded-md font-medium bg-slate-100 text-slate-700">Chưa kiểm</button>
-          </div>
-          <span class="text-[10px] text-slate-400 font-mono" id="displayCountLabel">250 mục</span>
-        </div>
       </div>
 
-      <!-- TOAST THÔNG BÁO LƯU THÀNH CÔNG -->
-      <div id="saveToast" class="absolute top-24 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl shadow-xl flex items-center gap-1.5 text-xs transition-all duration-300 opacity-0 pointer-events-none -translate-y-2">
-        <span>✅</span>
-        <span>Đã lưu số liệu kho!</span>
+      <!-- Cụm nút tác vụ -->
+      <div class="flex items-center gap-1.5 no-print">
+        <button onclick="handleManualSave()" class="bg-amber-400 hover:bg-amber-500 active:scale-95 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow flex items-center gap-1 text-xs sm:text-sm transition">
+          💾 <span>Lưu Lại</span>
+        </button>
+        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold px-2.5 py-1.5 rounded-xl shadow text-xs sm:text-sm transition flex items-center gap-1">
+          📊 <span>Excel</span>
+        </button>
+        <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-semibold px-2.5 py-1.5 rounded-xl shadow text-xs sm:text-sm transition flex items-center gap-1">
+          📄 <span>PDF</span>
+        </button>
+        <button onclick="resetData()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 px-2 py-1.5 rounded-xl text-xs transition" title="Khôi phục danh sách gốc từ sổ">
+          🔄
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Thanh tìm kiếm & bộ lọc -->
+  <div class="bg-white border-b border-slate-200 shadow-xs py-2 px-2.5 sm:px-4 no-print sticky top-[49px] sm:top-[57px] z-20">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
+      
+      <!-- Ô tìm kiếm -->
+      <div class="relative flex-1">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-sm">🔍</span>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Tìm tên hàng hoặc số TT..."
+          oninput="renderTable()"
+          class="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-100 bg-slate-50 transition"
+        />
       </div>
 
-      <!-- KHUNG CUỘN CHÍNH (BẢNG KIỂM KÊ + THỐNG KÊ DƯỚI CÙNG) -->
-      <div class="phone-scroll-area bg-slate-50 text-slate-800">
-        
-        <!-- BẢNG TÍNH 4-5 CỘT TỐI ƯU CHO MÀN HÌNH DỌC ĐIỆN THOẠI -->
-        <div class="bg-white border-b border-slate-200">
-          <table class="w-full text-left border-collapse" id="inventoryTable">
-            <thead class="sticky-table-header">
-              <tr class="text-white text-[10.5px] font-bold uppercase tracking-wider">
-                <th class="py-2 px-1 col-tt border-b border-slate-700">TT</th>
-                <th class="py-2 px-1 col-name border-b border-slate-700">Tên Hàng</th>
-                <!-- Cột Nháp: Cho phép gõ 5+6+23 -->
-                <th class="py-2 px-1 col-draft text-right bg-amber-900/60 border-b border-slate-700" title="Nhập phép tính kiểm kê, ví dụ: 5+6+23">SL Nháp</th>
-                <!-- Cột Số Lượng: Tự cộng từ cột nháp hoặc gõ tay -->
-                <th class="py-2 px-1 col-qty text-right bg-indigo-950/70 border-b border-slate-700">Số Lượng</th>
-                <!-- Cột Đơn Giá -->
-                <th class="py-2 px-1 col-price text-right border-b border-slate-700">Đơn Giá</th>
-                <!-- Cột Thành Tiền -->
-                <th class="py-2 px-1.5 col-total text-right border-b border-slate-700">Thành Tiền</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody" class="divide-y divide-slate-200 font-medium text-[11.5px]">
-              <!-- Nội dung render động qua JavaScript -->
-            </tbody>
-          </table>
-
-          <div id="emptyMessage" class="hidden py-8 text-center text-slate-400 text-xs">
-            Không tìm thấy sản phẩm phù hợp!
-          </div>
-        </div>
-
-        <!-- PHẦN THỐNG KÊ KHO DƯỚI CÙNG (THEO ĐÚNG YÊU CẦU) -->
-        <section class="p-3 bg-slate-100 border-t-2 border-slate-300 mb-14">
-          <h2 class="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1">
-            <span>📊</span> TỔNG HỢP KIỂM KÊ KHO
-          </h2>
-
-          <div class="grid grid-cols-2 gap-2 text-[11px]">
-            <!-- Tổng mặt hàng -->
-            <div class="bg-white p-2 rounded-xl shadow-xs border border-slate-200">
-              <span class="text-slate-400 text-[10px] block">Tổng mặt hàng</span>
-              <span id="statTotalItems" class="text-base font-black text-slate-800">250</span>
-            </div>
-
-            <!-- Đã kiểm -->
-            <div class="bg-white p-2 rounded-xl shadow-xs border border-slate-200">
-              <span class="text-slate-400 text-[10px] block">Đã có số lượng</span>
-              <div class="flex items-baseline justify-between">
-                <span id="statCountedItems" class="text-base font-black text-indigo-600">0</span>
-                <span id="statProgress" class="text-[9px] font-bold text-indigo-500">0%</span>
-              </div>
-            </div>
-
-            <!-- Tổng số lượng tồn -->
-            <div class="bg-white p-2 rounded-xl shadow-xs border border-slate-200">
-              <span class="text-slate-400 text-[10px] block">Tổng số lượng tồn</span>
-              <span id="statTotalQty" class="text-base font-black text-emerald-600">0</span>
-            </div>
-
-            <!-- TỔNG TIỀN KHO -->
-            <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 text-white p-2 rounded-xl shadow-xs">
-              <span class="text-indigo-200 text-[9.5px] block font-semibold">TỔNG THÀNH TIỀN</span>
-              <span id="statTotalAmount" class="text-xs font-black text-amber-300 block leading-tight mt-0.5">0 ₫</span>
-            </div>
-          </div>
-        </section>
-
-      </div>
-
-      <!-- NÚT LƯU NỔI (FLOATING SAVE BUTTON) GÓC DƯỚI ĐIỆN THOẠI -->
-      <button onclick="handleManualSave()" class="absolute bottom-3 right-3 z-40 bg-amber-400 hover:bg-amber-500 active:scale-90 text-slate-950 font-black px-3.5 py-2 rounded-full shadow-2xl flex items-center gap-1 text-[11.5px] border-2 border-white transition">
-        <span>💾</span>
-        <span>LƯU NGAY</span>
-      </button>
-
-      <!-- HOME INDICATOR (THANH GẠCH ĐÁY IPHONE) -->
-      <div class="h-4 bg-slate-900 flex items-center justify-center select-none">
-        <div class="w-28 h-1 bg-slate-600 rounded-full"></div>
+      <!-- Bộ lọc nhanh -->
+      <div class="flex items-center gap-1.5 overflow-x-auto text-xs">
+        <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow-xs whitespace-nowrap">Tất cả (250)</button>
+        <button onclick="setFilter('has_stock')" id="filter-has_stock" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap">Có SL</button>
+        <button onclick="setFilter('no_stock')" id="filter-no_stock" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap">Chưa kiểm</button>
       </div>
 
     </div>
+  </div>
+
+  <!-- Nội dung bảng kiểm kê toàn màn hình -->
+  <main class="max-w-7xl w-full mx-auto px-1 sm:px-4 py-2 sm:py-3 flex-1 flex flex-col">
+    
+    <!-- Hướng dẫn nhanh -->
+    <div class="no-print mb-2 text-[11px] sm:text-xs text-slate-600 bg-amber-50 border border-amber-200 rounded-xl p-2 flex items-center justify-between gap-1">
+      <div>
+        💡 <b>Mẹo nhập nhanh:</b> Cột <b>SL Nháp</b> gõ phép cộng ví dụ <code class="bg-amber-100 text-red-600 px-1 font-bold rounded">5+6+23</code> sẽ tự động tính ra cột <b>Số Lượng</b>. Bấm <b>💾 Lưu Lại</b> bất cứ khi nào để lưu vào máy.
+      </div>
+    </div>
+
+    <!-- BẢNG DỮ LIỆU ĐẦY ĐỦ: GHIM TIÊU ĐỀ (STICKY) & HIỂN THỊ TRỌN VẸN TRÊN MÀN HÌNH DỌC ĐIỆN THOẠI -->
+    <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden print-shadow-none">
+      <div class="table-container">
+        <table class="w-full text-left border-collapse min-w-[350px] sm:min-w-[650px]" id="inventoryTable">
+          <thead class="sticky-header">
+            <tr class="text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider">
+              <th class="compact-cell col-tt text-center border-b border-slate-700">TT</th>
+              <th class="compact-cell col-name border-b border-slate-700">Tên Hàng</th>
+              <th class="compact-cell col-draft text-right bg-amber-900/60 border-b border-slate-700" title="Gõ phép cộng kiểm kê, vd: 5+6+23">SL Nháp</th>
+              <th class="compact-cell col-qty text-right bg-indigo-950/70 border-b border-slate-700">Số Lượng</th>
+              <th class="compact-cell col-price text-right border-b border-slate-700">Đơn Giá</th>
+              <th class="compact-cell col-total text-right border-b border-slate-700">Thành Tiền</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-200 font-medium text-xs sm:text-sm">
+            <!-- Render bằng JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="emptyMessage" class="hidden py-8 text-center text-slate-400 text-xs sm:text-sm">
+        Không tìm thấy mặt hàng nào phù hợp!
+      </div>
+    </div>
+
+    <!-- KHU VỰC THỐNG KÊ (DƯỚI CÙNG THEO YÊU CẦU) -->
+    <section class="mt-6 pt-3 border-t border-slate-300">
+      <h2 class="text-sm sm:text-base font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
+        <span>📊</span> TỔNG HỢP VÀ THỐNG KÊ KHO
+      </h2>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        
+        <div class="bg-white rounded-xl p-2.5 sm:p-4 shadow border border-slate-200">
+          <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Tổng mặt hàng</span>
+          <div class="mt-1 flex items-baseline justify-between">
+            <span id="statTotalItems" class="text-lg sm:text-2xl font-black text-slate-800">250</span>
+            <span class="text-[10px] sm:text-xs text-slate-400">mục</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-2.5 sm:p-4 shadow border border-slate-200">
+          <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Đã kiểm đếm tồn</span>
+          <div class="mt-1 flex items-baseline justify-between">
+            <span id="statCountedItems" class="text-lg sm:text-2xl font-black text-indigo-600">0</span>
+            <span id="statProgress" class="text-[10px] sm:text-xs text-indigo-500 font-bold">0%</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-2.5 sm:p-4 shadow border border-slate-200">
+          <span class="text-slate-500 text-[11px] sm:text-xs font-semibold block">Tổng số lượng tồn</span>
+          <div class="mt-1 flex items-baseline justify-between">
+            <span id="statTotalQty" class="text-lg sm:text-2xl font-black text-emerald-600">0</span>
+            <span class="text-[10px] sm:text-xs text-slate-400">sp</span>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-xl p-2.5 sm:p-4 shadow text-white col-span-2 lg:col-span-1">
+          <span class="text-indigo-200 text-[11px] sm:text-xs font-semibold block">TỔNG THÀNH TIỀN (VNĐ)</span>
+          <div class="mt-1">
+            <div id="statTotalAmount" class="text-lg sm:text-2xl font-black text-amber-300 tracking-tight">0 ₫</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Nút Lưu Nổi ở góc dưới màn hình điện thoại -->
+  <div class="fixed bottom-3 right-3 z-40 sm:hidden no-print">
+    <button onclick="handleManualSave()" class="bg-amber-400 hover:bg-amber-500 active:scale-90 text-slate-950 font-black px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-1.5 text-xs border-2 border-white transition">
+      <span>💾</span>
+      <span>LƯU NGAY</span>
+    </button>
   </div>
 
   <!-- JAVASCRIPT XỬ LÝ DỮ LIỆU & GIAO DIỆN -->
@@ -335,11 +264,9 @@
     let inventory = [];
     let periodTitle = "Tháng 10/2026";
     let currentFilter = 'all';
-    let currentScale = 1.0;
-    let isLandscape = false;
 
-    const STORAGE_DATA_KEY = 'inventory_demo_v4';
-    const STORAGE_PERIOD_KEY = 'inventory_period_v4';
+    const STORAGE_DATA_KEY = 'inventory_stock_data_full_v1';
+    const STORAGE_PERIOD_KEY = 'inventory_period_full_v1';
 
     function loadData() {
       const savedPeriod = localStorage.getItem(STORAGE_PERIOD_KEY);
@@ -366,10 +293,10 @@
 
       if (notify) {
         const toast = document.getElementById('saveToast');
-        toast.classList.remove('opacity-0', '-translate-y-2', 'pointer-events-none');
+        toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
         toast.classList.add('opacity-100', 'translate-y-0');
         setTimeout(() => {
-          toast.classList.add('opacity-0', '-translate-y-2', 'pointer-events-none');
+          toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
           toast.classList.remove('opacity-100', 'translate-y-0');
         }, 1800);
       }
@@ -466,15 +393,15 @@
       ['all', 'has_stock', 'no_stock'].forEach(t => {
         const btn = document.getElementById('filter-' + t);
         if (t === type) {
-          btn.className = 'px-2 py-0.5 rounded-md font-bold bg-indigo-600 text-white';
+          btn.className = 'filter-btn px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow-xs whitespace-nowrap';
         } else {
-          btn.className = 'px-2 py-0.5 rounded-md font-medium bg-slate-100 text-slate-700';
+          btn.className = 'filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap';
         }
       });
       renderTable();
     }
 
-    // RENDER BẢNG KIỂM KÊ (Tối ưu để trên màn hình điện thoại thấy trọn vẹn 5 cột)
+    // RENDER BẢNG TOÀN DIỆN
     function renderTable() {
       const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
       const tbody = document.getElementById('tableBody');
@@ -501,58 +428,59 @@
 
         tr.innerHTML = `
           <!-- TT -->
-          <td class="py-1 px-1 col-tt text-slate-400 font-bold border-b border-slate-200 text-[10px]">
+          <td class="compact-cell col-tt text-center text-slate-400 font-bold border-b border-slate-200">
             ${item.tt}
           </td>
 
           <!-- Tên hàng (Sửa trực tiếp) -->
-          <td class="py-1 px-1 col-name border-b border-slate-200">
+          <td class="compact-cell col-name border-b border-slate-200">
             <input 
               type="text"
               value="${item.name || ''}"
               onchange="handleNameChange(${item.tt}, this.value)"
               placeholder="Tên..."
-              class="w-full font-bold text-slate-800 bg-transparent hover:bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 py-0.5 text-[11px] leading-tight"
+              class="compact-input compact-name w-full font-bold text-slate-800 bg-transparent hover:bg-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded border border-transparent hover:border-slate-300 transition"
             />
           </td>
 
           <!-- SL Nháp (vd: 5+6+23) -->
-          <td class="py-1 px-1 col-draft text-right border-b border-slate-200 bg-amber-50/40">
+          <td class="compact-cell col-draft text-right border-b border-slate-200 bg-amber-50/40">
             <input
               type="text"
               value="${item.draft || ''}"
               placeholder="nháp"
               onchange="handleDraftChange(${item.tt}, this.value)"
-              class="w-full text-right font-medium text-amber-900 bg-white border border-amber-300 rounded px-1 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-amber-500"
+              class="compact-input w-full text-right font-medium text-amber-900 bg-white border border-amber-300 rounded focus:outline-none focus:ring-1 focus:ring-amber-500"
+              title="Gõ phép cộng kiểm kê"
             />
           </td>
 
           <!-- Số lượng (tự tính hoặc gõ tay) -->
-          <td class="py-1 px-1 col-qty text-right border-b border-slate-200">
+          <td class="compact-cell col-qty text-right border-b border-slate-200">
             <input
               type="number"
               step="any"
               value="${item.sl !== null && item.sl !== undefined ? item.sl : ''}"
               placeholder="0"
               onchange="updateField(${item.tt}, 'sl', this.value)"
-              class="w-full text-right font-black text-indigo-900 bg-white border border-slate-300 rounded px-1 py-0.5 text-[11px] focus:border-indigo-600 focus:outline-none"
+              class="compact-input w-full text-right font-black text-indigo-900 bg-white border border-slate-300 rounded focus:border-indigo-600 focus:outline-none"
             />
           </td>
 
           <!-- Đơn giá -->
-          <td class="py-1 px-1 col-price text-right border-b border-slate-200">
+          <td class="compact-cell col-price text-right border-b border-slate-200">
             <input
               type="number"
               step="any"
               value="${item.dg !== null && item.dg !== undefined ? item.dg : ''}"
               placeholder="0"
               onchange="updateField(${item.tt}, 'dg', this.value)"
-              class="w-full text-right font-medium text-slate-800 bg-white border border-slate-300 rounded px-1 py-0.5 text-[11px] focus:border-indigo-600 focus:outline-none"
+              class="compact-input w-full text-right font-medium text-slate-800 bg-white border border-slate-300 rounded focus:border-indigo-600 focus:outline-none"
             />
           </td>
 
           <!-- Thành tiền -->
-          <td class="py-1 px-1.5 col-total text-right font-bold text-indigo-700 border-b border-slate-200 text-[10.5px] whitespace-nowrap">
+          <td class="compact-cell col-total text-right font-bold text-indigo-700 border-b border-slate-200 whitespace-nowrap">
             ${lineTotal !== null ? formatCurrency(lineTotal) : '-'}
           </td>
         `;
@@ -566,7 +494,6 @@
         emptyMsg.classList.add('hidden');
       }
 
-      document.getElementById('displayCountLabel').textContent = `${visibleCount}/${inventory.length} mục`;
       updateStats();
     }
 
@@ -598,9 +525,8 @@
       document.getElementById('statTotalAmount').textContent = formatCurrency(totalAmount);
     }
 
-    // XUẤT EXCEL
+    // XUẤT EXCEL CHUẨN FONT TIMES NEW ROMAN, CỠ CHỮ 12PT
     function exportToExcel() {
-      // Sử dụng thư viện xlsx-js-style để tạo file XLSX có font Times New Roman, cỡ 12pt
       const wb = XLSX.utils.book_new();
 
       const fontTNR12 = { name: "Times New Roman", sz: 12 };
@@ -667,7 +593,6 @@
         numFmt: "#,##0"
       };
 
-      // Dữ liệu bảng tính
       const wsData = [
         [`BẢNG THỐNG KÊ HÀNG TỒN - ${periodTitle.toUpperCase()}`],
         ["TT", "Tên Hàng", "SL Nháp", "Số Lượng", "Đơn Giá (đ)", "Thành Tiền (đ)"]
@@ -690,28 +615,24 @@
         ]);
       });
 
-      // Dòng tổng cộng
       wsData.push(["", "TỔNG CỘNG THÀNH TIỀN", "", "", "", grandTotal]);
 
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-      // Thiết lập độ rộng cột
       ws['!cols'] = [
-        { wch: 8 },   // TT
-        { wch: 32 },  // Tên hàng
-        { wch: 16 },  // SL Nháp
-        { wch: 14 },  // Số lượng
-        { wch: 16 },  // Đơn giá
-        { wch: 20 }   // Thành tiền
+        { wch: 8 },
+        { wch: 32 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 16 },
+        { wch: 20 }
       ];
 
-      // Gộp ô tiêu đề
       ws['!merges'] = [
         { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
         { s: { r: wsData.length - 1, c: 1 }, e: { r: wsData.length - 1, c: 4 } }
       ];
 
-      // Áp dụng định dạng font Times New Roman và cỡ chữ 12pt cho từng ô
       const range = XLSX.utils.decode_range(ws['!ref']);
       for (let R = range.s.r; R <= range.e.r; ++R) {
         for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -742,9 +663,8 @@
       XLSX.writeFile(wb, `Thong_Ke_Hang_Ton_${periodTitle.replace(/[/ ]/g, '_')}.xlsx`);
     }
 
-    // XUẤT PDF CHUẨN XÁC 100%: HỖ TRỢ TIẾNG VIỆT CÓ DẤU & VỪA VẶN ĐÚNG 100 BẢN GHI/TRANG
+    // XUẤT PDF CHUẨN XÁC 100%: 3 TRANG, 2 CỘT/TRANG (50 MỤC/CỘT), DÒNG TỔNG IN ĐẬM, TỔNG TOÀN BỘ KHÔNG BỊ CẮT SỐ
     function exportToPDF() {
-      // 1. Kiểm tra bộ font tiếng Việt Unicode từ pdfmake VFS
       let hasVFSFont = false;
       let fontBinary = null;
       if (window.pdfMake && window.pdfMake.vfs && window.pdfMake.vfs['Roboto-Regular.ttf']) {
@@ -755,7 +675,6 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      // Nếu có font VFS Unicode, thêm vào jsPDF để hiển thị tiếng Việt không bao giờ lỗi dấu
       if (hasVFSFont && fontBinary) {
         try {
           doc.addFileToVFS('TimesViet-Regular.ttf', fontBinary);
@@ -763,19 +682,17 @@
           doc.addFont('TimesViet-Regular.ttf', 'TimesViet', 'bold');
           doc.setFont('TimesViet');
         } catch(e) {
-          console.warn('Lỗi load font VFS, fallback sang times chuẩn:', e);
+          console.warn('Lỗi load font VFS, fallback sang times:', e);
         }
       }
 
       const activeFont = doc.getFontList()['TimesViet'] ? 'TimesViet' : 'times';
 
-      // Cấu hình tọa độ 2 cột song song trên A4 (Rộng: 210mm, Cao: 297mm)
       const pageWidth = 210;
       const leftColX = 6;
       const rightColX = 107;
       const colWidth = 97;
 
-      // Độ rộng các cột tương ứng đúng file gốc (điều chỉnh cột Thành tiền rộng rãi hơn cho số tiền lớn)
       const colStyles = {
         0: { halign: 'center', cellWidth: 8 },
         1: { cellWidth: 38 },
@@ -784,7 +701,6 @@
         4: { halign: 'right', cellWidth: 21 }
       };
 
-      // Tối ưu để vừa trọn vẹn 50 dòng + 1 dòng tiêu đề + 1 dòng TỔNG = 52 dòng trên 1 trang cao 297mm
       const tableStyles = {
         font: activeFont,
         fontSize: 7.2,
@@ -806,7 +722,6 @@
         cellPadding: { top: 0.8, bottom: 0.8, left: 0.5, right: 0.5 }
       };
 
-      // Hàm gom đúng 50 bản ghi mỗi cột + dòng TỔNG
       function buildColumnData(startIdx, endIdx) {
         const rows = [];
         let subtotal = 0;
@@ -841,7 +756,6 @@
 
       // Hook vẽ lại hàng TỔNG in đậm, có nền nổi bật và không bao giờ tràn số
       const customDidParseCell = function(data) {
-        // Kiểm tra nếu là dòng cuối cùng (dòng TỔNG của 50 bản ghi)
         if (data.row.index === data.table.body.length - 1) {
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.textColor = [0, 0, 0];
@@ -856,7 +770,7 @@
         }
       };
 
-      // ================= TRANG 1: TT 1 - 50 (Trái) & TT 51 - 100 (Phải) =================
+      // ================= TRANG 1 =================
       doc.setFont(activeFont, 'bold');
       doc.setFontSize(11);
       doc.text(`BẢNG THỐNG KÊ HÀNG TỒN - ${periodTitle.toUpperCase()}`, pageWidth / 2, 7.5, { align: "center" });
@@ -892,7 +806,7 @@
         pageBreak: 'avoid'
       });
 
-      // ================= TRANG 2: TT 101 - 150 (Trái) & TT 151 - 200 (Phải) =================
+      // ================= TRANG 2 =================
       doc.addPage();
       const p2Left = buildColumnData(100, 149);
       const p2Right = buildColumnData(150, 199);
@@ -925,7 +839,7 @@
         pageBreak: 'avoid'
       });
 
-      // ================= TRANG 3: TT 201 - 250 (Trái) & BẢNG TỔNG TOÀN BỘ (Phải) =================
+      // ================= TRANG 3 =================
       doc.addPage();
       const p3Left = buildColumnData(200, 249);
 
@@ -952,7 +866,6 @@
         pageBreak: 'avoid'
       });
 
-      // Tối ưu bảng TỔNG TOÀN BỘ: Gộp ô tiêu đề và mở rộng cột tiền để chứa số tiền lớn (hàng chục, hàng trăm triệu/tỷ)
       const grandTotalFormatted = Math.round(grandTotal).toLocaleString('vi-VN') + ' đ';
       const summaryRows = [
         [
@@ -975,7 +888,6 @@
         pageBreak: 'avoid'
       });
 
-      // Đánh số trang chân trang chuẩn
       const totalPages = doc.internal.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
@@ -987,41 +899,9 @@
       doc.save(`Thong_Ke_Hang_Ton_${periodTitle.replace(/[/ ]/g, '_')}.pdf`);
     }
 
-    // ĐIỀU KHIỂN KHUNG MÔ PHỎNG ĐIỆN THOẠI
-    function toggleOrientation() {
-      const container = document.getElementById('phoneContainer');
-      const text = document.getElementById('orientText');
-      isLandscape = !isLandscape;
-      if (isLandscape) {
-        container.classList.add('landscape');
-        text.textContent = 'Màn hình ngang';
-      } else {
-        container.classList.remove('landscape');
-        text.textContent = 'Màn hình dọc';
-      }
-    }
-
-    function changeScale(delta) {
-      currentScale = Math.min(Math.max(0.7, currentScale + delta), 1.25);
-      const container = document.getElementById('phoneContainer');
-      container.style.transform = `scale(${currentScale})`;
-      document.getElementById('scaleLabel').textContent = Math.round(currentScale * 100) + '%';
-    }
-
-    // Đồng hồ thời gian thực góc trên điện thoại
-    function updateClock() {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      const el = document.getElementById('clockDisplay');
-      if (el) el.textContent = `${h}:${m}`;
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
       renderTable();
-      updateClock();
-      setInterval(updateClock, 30000);
     });
   </script>
 </body>
